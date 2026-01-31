@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.env.*
+.next
+node_modules
+out
+dist
+.turbo
+.cache
+*.log
+*.tsbuildinfo
+
+# Tauri / Rust
+src-tauri/target
+src-tauri/.cargo
