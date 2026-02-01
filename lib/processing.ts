@@ -1,10 +1,11 @@
 "use client";
 
-import type { Settings } from "@/lib/store";
+import type { Settings, ApiKeyEntry } from "@/lib/store";
 import { getMessages, t as translate } from "@/lib/i18n";
 
 const OPENAI_BASE_URL = "https://api.openai.com";
 const OPENAI_WHISPER_MODEL = "whisper-1";
+const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 const KEYWORD_LIMIT = 6;
 const DEFAULT_KEYWORD_PROMPT =
@@ -80,6 +81,19 @@ function resolveEndpoint(base: string | undefined, path: string, fallbackBase = 
   return `${normalized}${path}`;
 }
 
+function normalizeBaseUrl(value: string, fallback: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+}
+
+function isTauriRuntime() {
+  return (
+    typeof window !== "undefined" &&
+    ("__TAURI__" in window || "__TAURI_INTERNALS__" in window)
+  );
+}
+
 async function readErrorMessage(response: Response) {
   const fallback = `Request failed (${response.status})`;
   try {
@@ -92,6 +106,16 @@ async function readErrorMessage(response: Response) {
     } catch {
       return fallback;
     }
+  }
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown error";
   }
 }
 
@@ -118,6 +142,66 @@ function extractResponseText(payload: any) {
     if (typeof content === "string") return content.trim();
   }
   return "";
+}
+
+async function runLocalLlm(prompt: string, settings: Settings, signal?: AbortSignal) {
+  const messages = getMessages(settings.general.language);
+  if (isTauriRuntime()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const model = settings.local.llm.ollamaModel?.trim();
+    if (!model) {
+      throw new Error(translate(messages, "errors.localLlm"));
+    }
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+    try {
+      const text = await invoke<string>("test_ollama_generate", {
+        baseUrl: settings.local.llm.ollamaBaseUrl,
+        model,
+        prompt,
+      });
+      if (signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
+      if (!text || typeof text !== "string") {
+        throw new Error("Local LLM returned no text.");
+      }
+      return text.trim();
+    } catch (error) {
+      throw new Error(getErrorMessage(error) || translate(messages, "errors.localLlm"));
+    }
+  }
+
+  const baseUrl = normalizeBaseUrl(settings.local.llm.ollamaBaseUrl, OLLAMA_BASE_URL);
+  const model = settings.local.llm.ollamaModel?.trim();
+  if (!model) {
+    throw new Error(translate(messages, "errors.localLlm"));
+  }
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      body: JSON.stringify({
+        prompt,
+        model,
+        stream: false,
+      }),
+    });
+  } catch {
+    throw new Error(translate(messages, "errors.localLlm"));
+  }
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+  const payload = await response.json();
+  const text = payload?.response ?? payload?.message?.content ?? "";
+  if (!text || typeof text !== "string") {
+    throw new Error("Local LLM returned no text.");
+  }
+  return text.trim();
 }
 
 function getModePrompt(mode: string) {
@@ -207,6 +291,35 @@ function parseKeywords(text: string, limit = KEYWORD_LIMIT) {
   return normalizeKeywords(candidates, limit);
 }
 
+function resolveAudioExtensionFromBlob(blob: Blob) {
+  const type = (blob.type || "").split(";")[0].trim().toLowerCase();
+  if (type === "audio/webm") return "webm";
+  if (type === "audio/ogg") return "ogg";
+  if (type === "audio/mpeg") return "mp3";
+  if (type === "audio/mp4") return "m4a";
+  if (type === "audio/wav") return "wav";
+  if ("name" in blob && typeof (blob as File).name === "string") {
+    const name = (blob as File).name.toLowerCase();
+    if (name.endsWith(".webm")) return "webm";
+    if (name.endsWith(".ogg")) return "ogg";
+    if (name.endsWith(".mp3")) return "mp3";
+    if (name.endsWith(".m4a") || name.endsWith(".mp4")) return "m4a";
+    if (name.endsWith(".wav")) return "wav";
+  }
+  return "webm";
+}
+
+async function blobToBase64(blob: Blob) {
+  const buffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 export function extractKeywords(text: string, limit = 4) {
   const tokens = text
     .toLowerCase()
@@ -221,29 +334,104 @@ export function extractKeywords(text: string, limit = 4) {
     .map(([token]) => token);
 }
 
+function pickKeyByProvider(
+  keys: ApiKeyEntry[] | undefined,
+  provider: string,
+  activeId?: string
+) {
+  if (!keys || !keys.length) return null;
+  if (provider === "Local") {
+    if (activeId) {
+      const selected = keys.find((entry) => entry.id === activeId);
+      if (selected && selected.provider === provider) return selected;
+    }
+    const byProvider = keys.find((entry) => entry.provider === provider);
+    return byProvider ?? null;
+  }
+  if (activeId) {
+    const selected = keys.find((entry) => entry.id === activeId);
+    if (selected && selected.provider === provider) return selected;
+  }
+  const byProvider = keys.find((entry) => entry.provider === provider);
+  return byProvider ?? keys[0] ?? null;
+}
+
+function resolveWhisperCredentials(settings: Settings) {
+  const provider = settings.api.whisper.provider;
+  const selected = pickKeyByProvider(
+    settings.api.whisper.keys,
+    provider,
+    settings.api.whisper.activeKeyId
+  );
+
+  return {
+    provider,
+    apiKey: selected?.apiKey ?? settings.api.whisper.apiKey,
+    endpoint: selected?.endpoint ?? settings.api.whisper.endpoint,
+  };
+}
+
+function resolveLlmCredentials(settings: Settings) {
+  const provider = settings.api.llm.provider;
+  const selected = pickKeyByProvider(
+    settings.api.llm.keys,
+    provider,
+    settings.api.llm.activeKeyId
+  );
+  return {
+    provider,
+    apiKey: selected?.apiKey ?? settings.api.llm.apiKey,
+    baseUrl: selected?.baseUrl ?? settings.api.llm.baseUrl,
+    model: selected?.model ?? settings.api.llm.model,
+  };
+}
+
 export async function transcribeAudio(
   blob: Blob,
   settings: Settings,
   signal?: AbortSignal
 ) {
   const messages = getMessages(settings.general.language);
-  if (settings.privacy.offline) {
+  const whisper = resolveWhisperCredentials(settings);
+  if (settings.privacy.offline && whisper.provider !== "Local") {
     throw new Error(translate(messages, "errors.offlineMode"));
   }
-  if (settings.api.whisper.provider === "Local") {
-    throw new Error(translate(messages, "errors.localTranscription"));
+  if (whisper.provider === "Local") {
+    const isTauriApp =
+      typeof window !== "undefined" &&
+      ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+    if (!isTauriApp) {
+      throw new Error(translate(messages, "errors.localTranscription"));
+    }
+    const { invoke } = await import("@tauri-apps/api/core");
+    const audioBase64 = await blobToBase64(blob);
+    const audioExt = resolveAudioExtensionFromBlob(blob);
+    const language =
+      settings.api.whisper.language !== "Auto" ? settings.api.whisper.language : null;
+    const transcript = await invoke<string>("transcribe_local_whisper", {
+      audioBase64,
+      audioExt,
+      language,
+      model: settings.local.whisper.model || null,
+      binaryPath: settings.local.whisper.binaryPath || null,
+      ffmpegPath: settings.ffmpegPath || null,
+    });
+    if (!transcript.trim()) {
+      throw new Error("Transcription returned no text.");
+    }
+    return transcript.trim();
   }
-  if (settings.api.whisper.provider === "Other" && !settings.api.whisper.endpoint.trim()) {
+  if (whisper.provider === "Other" && !whisper.endpoint.trim()) {
     throw new Error(translate(messages, "errors.customWhisperEndpointRequired"));
   }
-  if (!settings.api.whisper.apiKey) {
+  if (!whisper.apiKey) {
     throw new Error(translate(messages, "errors.missingWhisperKey"));
   }
   if (blob.size > MAX_AUDIO_BYTES) {
     throw new Error(translate(messages, "errors.audioTooLarge"));
   }
 
-  const endpoint = resolveEndpoint(settings.api.whisper.endpoint, "/v1/audio/transcriptions");
+  const endpoint = resolveEndpoint(whisper.endpoint, "/v1/audio/transcriptions");
   const formData = new FormData();
   formData.append("file", blob, "recording.webm");
   formData.append("model", OPENAI_WHISPER_MODEL);
@@ -255,7 +443,7 @@ export async function transcribeAudio(
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${settings.api.whisper.apiKey}`,
+      Authorization: `Bearer ${whisper.apiKey}`,
     },
     signal,
     body: formData,
@@ -285,34 +473,43 @@ async function generateKeywords(
 ) {
   const messages = getMessages(settings.general.language);
   const fallbackPrompt = translate(messages, "keywords.defaultPrompt");
-  const endpoint = resolveEndpoint(settings.api.llm.baseUrl, "/v1/responses");
   const systemPrompt =
     (prompt?.trim() || fallbackPrompt || DEFAULT_KEYWORD_PROMPT) +
     "\n\nReturn only a JSON array of strings. Respond in the same language as the transcript.";
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${settings.api.llm.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    signal,
-    body: JSON.stringify({
-      model: settings.api.llm.model || "gpt-4o-mini",
-      input: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: transcript },
-      ],
-      temperature: 0.2,
-      max_output_tokens: 200,
-    }),
-  });
+  let raw = "";
 
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+  if (settings.api.llm.provider === "Local") {
+    const localPrompt = `${systemPrompt}\n\n${transcript}`;
+    raw = await runLocalLlm(localPrompt, settings, signal);
+  } else {
+    const llm = resolveLlmCredentials(settings);
+    const endpoint = resolveEndpoint(llm.baseUrl, "/v1/responses");
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${llm.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal,
+      body: JSON.stringify({
+        model: llm.model || "gpt-4o-mini",
+        input: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: transcript },
+        ],
+        temperature: 0.2,
+        max_output_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readErrorMessage(response));
+    }
+
+    const payload = await response.json();
+    raw = extractResponseText(payload);
   }
 
-  const payload = await response.json();
-  const raw = extractResponseText(payload);
   const keywords = parseKeywords(raw, KEYWORD_LIMIT);
   if (!keywords.length) {
     throw new Error("Keyword extraction returned no keywords.");
@@ -327,48 +524,54 @@ export async function enrichTranscript(
   signal?: AbortSignal
 ) {
   const messages = getMessages(settings.general.language);
+  const llm = resolveLlmCredentials(settings);
   if (!transcript.trim()) {
     throw new Error(translate(messages, "errors.noTranscript"));
   }
-  if (settings.privacy.offline) {
+  if (settings.privacy.offline && llm.provider !== "Local") {
     throw new Error(translate(messages, "errors.offlineMode"));
   }
-  if (settings.api.llm.provider === "Local") {
-    throw new Error(translate(messages, "errors.localLlm"));
-  }
-  if (!settings.api.llm.apiKey) {
-    throw new Error(translate(messages, "errors.missingLlmKey"));
-  }
-  if (settings.api.llm.provider !== "OpenAI" && !settings.api.llm.baseUrl.trim()) {
-    throw new Error(translate(messages, "errors.baseUrlRequired"));
-  }
+  const systemPrompt =
+    (prompt || getModePrompt("smart")) + "\n\nRespond in the same language as the transcript.";
+  let enriched = "";
 
-  const endpoint = resolveEndpoint(settings.api.llm.baseUrl, "/v1/responses");
-  const systemPrompt = (prompt || getModePrompt("smart")) + "\n\nRespond in the same language as the transcript.";
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${settings.api.llm.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    signal,
-    body: JSON.stringify({
-      model: settings.api.llm.model || "gpt-4o-mini",
-      input: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: transcript },
-      ],
-      temperature: 0.3,
-      max_output_tokens: 1200,
-    }),
-  });
+  if (llm.provider === "Local") {
+    const localPrompt = `${systemPrompt}\n\n${transcript}`;
+    enriched = await runLocalLlm(localPrompt, settings, signal);
+  } else {
+    if (!llm.apiKey) {
+      throw new Error(translate(messages, "errors.missingLlmKey"));
+    }
+    if (llm.provider !== "OpenAI" && !llm.baseUrl.trim()) {
+      throw new Error(translate(messages, "errors.baseUrlRequired"));
+    }
 
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    const endpoint = resolveEndpoint(llm.baseUrl, "/v1/responses");
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${llm.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal,
+      body: JSON.stringify({
+        model: llm.model || "gpt-4o-mini",
+        input: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: transcript },
+        ],
+        temperature: 0.3,
+        max_output_tokens: 1200,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readErrorMessage(response));
+    }
+
+    const payload = await response.json();
+    enriched = extractResponseText(payload);
   }
-
-  const payload = await response.json();
-  const enriched = extractResponseText(payload);
   if (!enriched) {
     throw new Error("Enrichment returned no text.");
   }

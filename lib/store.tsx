@@ -57,6 +57,22 @@ export type Settings = {
     theme: "system" | "light" | "dark";
     hotkey: string;
     cancelHotkey: string;
+    setupCompleted: boolean;
+  };
+  ffmpegPath: string;
+  local: {
+    whisper: {
+      provider: "Local";
+      model: string;
+      binaryPath: string;
+      installed: boolean;
+    };
+    llm: {
+      provider: "ollama";
+      ollamaBaseUrl: string;
+      ollamaModel: string;
+      available: boolean;
+    };
   };
   api: {
     whisper: {
@@ -64,12 +80,16 @@ export type Settings = {
       apiKey: string;
       endpoint: string;
       language: "Auto" | "de" | "en" | "fr" | "it";
+      activeKeyId?: string;
+      keys?: ApiKeyEntry[];
     };
     llm: {
       provider: "Local" | "OpenAI" | "Gemini" | "Claude" | "Grok";
       model: string;
       apiKey: string;
       baseUrl: string;
+      activeKeyId?: string;
+      keys?: ApiKeyEntry[];
     };
   };
   privacy: {
@@ -80,12 +100,37 @@ export type Settings = {
   keywordsPrompt: string;
 };
 
+export type ApiKeyEntry = {
+  id: string;
+  provider: string;
+  apiKey: string;
+  baseUrl?: string;
+  endpoint?: string;
+  model?: string;
+};
+
 const defaultSettings: Settings = {
   general: {
     language: "de",
     theme: "system",
     hotkey: "Ctrl+Shift+R",
     cancelHotkey: "Esc",
+    setupCompleted: false,
+  },
+  ffmpegPath: "",
+  local: {
+    whisper: {
+      provider: "Local",
+      model: "",
+      binaryPath: "",
+      installed: false,
+    },
+    llm: {
+      provider: "ollama",
+      ollamaBaseUrl: "http://127.0.0.1:11434",
+      ollamaModel: "llama3.1",
+      available: false,
+    },
   },
   api: {
     whisper: {
@@ -93,12 +138,14 @@ const defaultSettings: Settings = {
       apiKey: "",
       endpoint: "",
       language: "Auto",
+      keys: [],
     },
     llm: {
       provider: "Local",
       model: "gpt-4o-mini",
       apiKey: "",
       baseUrl: "",
+      keys: [],
     },
   },
   privacy: {
@@ -208,6 +255,13 @@ function decodeBase64(base64: string) {
   return bytes;
 }
 
+function createKeyId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `key-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function resolveLocale(value: unknown): Locale {
   if (value === "de" || value === "en" || value === "fr" || value === "it") return value;
   return defaultSettings.general.language;
@@ -245,6 +299,58 @@ function migrateEnrichments(
     }
     return item;
   });
+}
+
+function normalizeKeyEntries(entries: any[]): ApiKeyEntry[] {
+  if (!Array.isArray(entries)) return [];
+  return entries
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const id = typeof entry.id === "string" && entry.id.trim() ? entry.id : createKeyId();
+      const provider = typeof entry.provider === "string" ? entry.provider : "";
+      const apiKey = typeof entry.apiKey === "string" ? entry.apiKey : "";
+      const baseUrl = typeof entry.baseUrl === "string" ? entry.baseUrl : undefined;
+      const endpoint = typeof entry.endpoint === "string" ? entry.endpoint : undefined;
+      const model = typeof entry.model === "string" ? entry.model : undefined;
+      return { id, provider, apiKey, baseUrl, endpoint, model };
+    })
+    .filter(Boolean) as ApiKeyEntry[];
+}
+
+function ensureKeyIds(entries: ApiKeyEntry[]): ApiKeyEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    id: entry.id && entry.id.trim() ? entry.id : createKeyId(),
+  }));
+}
+
+function resolveActiveKeyId(activeId: unknown, keys: ApiKeyEntry[]) {
+  if (typeof activeId === "string" && keys.some((key) => key.id === activeId)) {
+    return activeId;
+  }
+  return keys[0]?.id;
+}
+
+function resolveActiveKeyByProvider(
+  keys: ApiKeyEntry[],
+  provider: string,
+  activeId?: string
+) {
+  if (!keys.length) return null;
+  if (provider === "Local") {
+    if (activeId) {
+      const selected = keys.find((key) => key.id === activeId);
+      if (selected && selected.provider === provider) return selected;
+    }
+    const byProvider = keys.find((key) => key.provider === provider);
+    return byProvider ?? null;
+  }
+  if (activeId) {
+    const selected = keys.find((key) => key.id === activeId);
+    if (selected && selected.provider === provider) return selected;
+  }
+  const byProvider = keys.find((key) => key.provider === provider);
+  return byProvider ?? keys[0] ?? null;
 }
 
 function shouldConvertForCompatibility(blob: Blob) {
@@ -544,6 +650,9 @@ function safeParseJson<T>(value: string | null, fallback: T): T {
 function normalizeSettings(input: Partial<Settings> | any): Settings {
   const legacy = input ?? {};
   const general = legacy.general ?? {};
+  const local = legacy.local ?? {};
+  const localLlm = local.llm ?? legacy.localLlm ?? {};
+  const localWhisper = local.whisper ?? legacy.localWhisper ?? {};
   const api = legacy.api ?? {};
   const language = resolveLocale(
     general.language ?? legacy.language ?? defaultSettings.general.language
@@ -560,6 +669,76 @@ function normalizeSettings(input: Partial<Settings> | any): Settings {
   const enrichments = Array.isArray(legacy.enrichments) && legacy.enrichments.length
     ? legacy.enrichments
     : localeDefaults.enrichments;
+  const ffmpegPath = legacy.ffmpegPath ?? legacy.paths?.ffmpegPath ?? defaultSettings.ffmpegPath;
+
+  const rawWhisperKeys =
+    api.whisper?.keys ?? api.whisperKeys ?? legacy.whisperKeys ?? [];
+  const rawLlmKeys =
+    api.llm?.keys ?? api.llmKeys ?? legacy.llmKeys ?? [];
+  let whisperKeys = ensureKeyIds(normalizeKeyEntries(rawWhisperKeys));
+  let llmKeys = ensureKeyIds(normalizeKeyEntries(rawLlmKeys));
+
+  if (!whisperKeys.length) {
+    const legacyKey = api.whisper?.apiKey ?? legacy.whisper?.apiKey ?? "";
+    if (legacyKey) {
+      whisperKeys = [
+        {
+          id: createKeyId(),
+          provider:
+            api.whisper?.provider ??
+            legacy.whisper?.provider ??
+            defaultSettings.api.whisper.provider,
+          apiKey: legacyKey,
+          endpoint: api.whisper?.endpoint ?? legacy.whisper?.endpoint ?? "",
+        },
+      ];
+    }
+  }
+
+  if (!llmKeys.length) {
+    const legacyKey = api.llm?.apiKey ?? legacy.llm?.apiKey ?? "";
+    if (legacyKey) {
+      llmKeys = [
+        {
+          id: createKeyId(),
+          provider:
+            api.llm?.provider ??
+            legacy.llm?.provider ??
+            defaultSettings.api.llm.provider,
+          apiKey: legacyKey,
+          baseUrl: api.llm?.baseUrl ?? legacy.llm?.baseUrl ?? "",
+          model: api.llm?.model ?? legacy.llm?.model ?? "",
+        },
+      ];
+    }
+  }
+
+  const whisperActiveId = resolveActiveKeyId(
+    api.whisper?.activeKeyId ?? api.whisperActiveId ?? legacy.whisperActiveId,
+    whisperKeys
+  );
+  const llmActiveId = resolveActiveKeyId(
+    api.llm?.activeKeyId ?? api.llmActiveId ?? legacy.llmActiveId,
+    llmKeys
+  );
+  const whisperProviderRaw = api.whisper?.provider ?? legacy.whisper?.provider;
+  const llmProviderRaw = api.llm?.provider ?? legacy.llm?.provider;
+  const resolvedWhisperProvider =
+    whisperProviderRaw ??
+    (whisperKeys.length ? (whisperKeys[0]?.provider as any) : defaultSettings.api.whisper.provider);
+  const resolvedLlmProvider =
+    llmProviderRaw ??
+    (llmKeys.length ? (llmKeys[0]?.provider as any) : defaultSettings.api.llm.provider);
+  const selectedWhisper = resolveActiveKeyByProvider(
+    whisperKeys,
+    resolvedWhisperProvider,
+    whisperActiveId
+  );
+  const selectedLlm = resolveActiveKeyByProvider(
+    llmKeys,
+    resolvedLlmProvider,
+    llmActiveId
+  );
 
   return {
     general: {
@@ -568,16 +747,32 @@ function normalizeSettings(input: Partial<Settings> | any): Settings {
       hotkey: general.hotkey ?? legacy.hotkey ?? defaultSettings.general.hotkey,
       cancelHotkey:
         general.cancelHotkey ?? legacy.cancelHotkey ?? defaultSettings.general.cancelHotkey,
+      setupCompleted:
+        general.setupCompleted ??
+        legacy.setupCompleted ??
+        defaultSettings.general.setupCompleted,
+    },
+    ffmpegPath,
+    local: {
+      whisper: {
+        provider: localWhisper.provider ?? defaultSettings.local.whisper.provider,
+        model: localWhisper.model ?? defaultSettings.local.whisper.model,
+        binaryPath: localWhisper.binaryPath ?? defaultSettings.local.whisper.binaryPath,
+        installed: localWhisper.installed ?? defaultSettings.local.whisper.installed,
+      },
+      llm: {
+        provider: defaultSettings.local.llm.provider,
+        ollamaBaseUrl: localLlm.ollamaBaseUrl ?? defaultSettings.local.llm.ollamaBaseUrl,
+        ollamaModel: localLlm.ollamaModel ?? defaultSettings.local.llm.ollamaModel,
+        available: localLlm.available ?? defaultSettings.local.llm.available,
+      },
     },
     api: {
       whisper: {
-        provider:
-          api.whisper?.provider ??
-          legacy.whisper?.provider ??
-          defaultSettings.api.whisper.provider,
-        apiKey:
-          api.whisper?.apiKey ?? legacy.whisper?.apiKey ?? defaultSettings.api.whisper.apiKey,
+        provider: resolvedWhisperProvider,
+        apiKey: selectedWhisper?.apiKey ?? api.whisper?.apiKey ?? legacy.whisper?.apiKey ?? defaultSettings.api.whisper.apiKey,
         endpoint:
+          selectedWhisper?.endpoint ??
           api.whisper?.endpoint ??
           legacy.whisper?.endpoint ??
           defaultSettings.api.whisper.endpoint,
@@ -585,13 +780,20 @@ function normalizeSettings(input: Partial<Settings> | any): Settings {
           api.whisper?.language ??
           legacy.whisper?.language ??
           defaultSettings.api.whisper.language,
+        activeKeyId: whisperActiveId,
+        keys: whisperKeys,
       },
       llm: {
-        provider:
-          api.llm?.provider ?? legacy.llm?.provider ?? defaultSettings.api.llm.provider,
-        model: api.llm?.model ?? legacy.llm?.model ?? defaultSettings.api.llm.model,
-        apiKey: api.llm?.apiKey ?? legacy.llm?.apiKey ?? defaultSettings.api.llm.apiKey,
-        baseUrl: api.llm?.baseUrl ?? legacy.llm?.baseUrl ?? defaultSettings.api.llm.baseUrl,
+        provider: resolvedLlmProvider,
+        model: selectedLlm?.model ?? api.llm?.model ?? legacy.llm?.model ?? defaultSettings.api.llm.model,
+        apiKey: selectedLlm?.apiKey ?? api.llm?.apiKey ?? legacy.llm?.apiKey ?? defaultSettings.api.llm.apiKey,
+        baseUrl:
+          selectedLlm?.baseUrl ??
+          api.llm?.baseUrl ??
+          legacy.llm?.baseUrl ??
+          defaultSettings.api.llm.baseUrl,
+        activeKeyId: llmActiveId,
+        keys: llmKeys,
       },
     },
     privacy: {
@@ -614,6 +816,10 @@ function localizeError(message: string, locale: Locale) {
     "No audio captured. Please check microphone input.": "errors.noAudioCaptured",
     "Recording error occurred": "errors.recordingError",
     "Audio file not available for retry.": "errors.audioRetryUnavailable",
+    "Local transcription is not configured.": "errors.localTranscription",
+    "Local LLM is not configured.": "errors.localLlm",
+    "Whisper binary not found. Set the path in Setup Wizard.": "errors.localTranscription",
+    "Whisper model path required for whisper.cpp.": "errors.localTranscription",
   };
   const key = map[message];
   return key ? translate(messages, key) : message;
@@ -1035,17 +1241,17 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       `${translate(messages, "errorDetails.llmProvider")}: ${settingsSnapshot.api.llm.provider}`,
     ];
     if (stage === "transcribing") {
-      lines.push(
-        `${translate(messages, "errorDetails.whisperEndpoint")}: ${
-          settingsSnapshot.api.whisper.endpoint || "default"
-        }`
-      );
+      const whisperEndpoint =
+        settingsSnapshot.api.whisper.provider === "Local"
+          ? translate(messages, "provider.local")
+          : settingsSnapshot.api.whisper.endpoint || "default";
+      lines.push(`${translate(messages, "errorDetails.whisperEndpoint")}: ${whisperEndpoint}`);
     } else {
-      lines.push(
-        `${translate(messages, "errorDetails.llmBaseUrl")}: ${
-          settingsSnapshot.api.llm.baseUrl || "default"
-        }`
-      );
+      const llmBaseUrl =
+        settingsSnapshot.api.llm.provider === "Local"
+          ? translate(messages, "provider.local")
+          : settingsSnapshot.api.llm.baseUrl || "default";
+      lines.push(`${translate(messages, "errorDetails.llmBaseUrl")}: ${llmBaseUrl}`);
     }
     lines.push(`${translate(messages, "errorDetails.message")}: ${message}`);
     return lines.join("\n");
@@ -1119,13 +1325,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       }
       const locale = settingsSnapshot.general.language;
       const fallback = translate(getMessages(locale), "errors.transcriptionFailed");
-      const message =
-        error instanceof Error ? localizeError(error.message, locale) : fallback;
+      const rawMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+          ? error
+          : typeof error === "object" && error && "message" in error
+          ? String((error as any).message)
+          : fallback;
+      const message = localizeError(rawMessage, locale);
       updateSession(sessionId, {
         status: "error",
         stage: undefined,
         errorMessage: message,
-        errorDetails: buildErrorDetails("transcribing", settingsSnapshot, message),
+        errorDetails: buildErrorDetails("transcribing", settingsSnapshot, rawMessage),
       });
       if (!settingsSnapshot.privacy.storeAudio) {
         clearAudioBlob(sessionId);
@@ -1173,13 +1386,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       }
       const locale = settingsSnapshot.general.language;
       const fallback = translate(getMessages(locale), "errors.enrichmentFailed");
-      const message =
-        error instanceof Error ? localizeError(error.message, locale) : fallback;
+      const rawMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+          ? error
+          : typeof error === "object" && error && "message" in error
+          ? String((error as any).message)
+          : fallback;
+      const message = localizeError(rawMessage, locale);
       updateSession(sessionId, {
         status: "error",
         stage: undefined,
         errorMessage: message,
-        errorDetails: buildErrorDetails("enriching", settingsSnapshot, message),
+        errorDetails: buildErrorDetails("enriching", settingsSnapshot, rawMessage),
       });
     } finally {
       if (!settingsSnapshot.privacy.storeAudio) {

@@ -28,11 +28,27 @@ const llmModels: Record<string, string[]> = {
   Gemini: ["gemini-1.5-flash", "gemini-1.5-pro"],
   Claude: ["claude-3.5-sonnet", "claude-3-opus"],
   Grok: ["grok-2-mini", "grok-2"],
+  OpenRouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-2.0-flash"],
+  Custom: [],
 };
 
-const whisperProviders = ["Local", "OpenAI Whisper API", "Other"] as const;
-const llmProviders = ["Local", "OpenAI", "Gemini", "Claude", "Grok"] as const;
+const whisperProviders = ["Local", "OpenAI Whisper API", "Custom"] as const;
+const llmProviders = ["Local", "OpenAI", "Gemini", "Claude", "Grok", "OpenRouter", "Custom"] as const;
 const languages = ["Auto", "de", "en", "fr", "it"] as const;
+
+const whisperEndpoints: Record<string, string> = {
+  "OpenAI Whisper API": "https://api.openai.com/v1/audio/transcriptions",
+  "Custom": "",
+};
+
+const llmBaseUrls: Record<string, string> = {
+  OpenAI: "https://api.openai.com/v1",
+  Gemini: "https://generativelanguage.googleapis.com/v1beta",
+  Claude: "https://api.anthropic.com/v1",
+  Grok: "https://api.x.ai/v1",
+  OpenRouter: "https://openrouter.ai/api/v1",
+  Custom: "",
+};
 
 const createId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -42,7 +58,11 @@ const createId = () => {
 };
 
 type SettingsDialogProps = {
-  children: ReactNode;
+  children?: ReactNode;
+  onOpenSetupWizard?: () => void;
+  initialTab?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
@@ -66,24 +86,36 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export function SettingsDialog({ children }: SettingsDialogProps) {
+export function SettingsDialog({
+  children,
+  onOpenSetupWizard,
+  initialTab = "general",
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: SettingsDialogProps) {
   const {
     state: { settings, settingsSource },
     actions: { updateSettings },
   } = useAppStore();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [draft, setDraft] = useState(settings);
   const [focusEnrichmentId, setFocusEnrichmentId] = useState<string | null>(null);
   const enrichmentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState(initialTab);
   const { t } = useI18n(draft.general.language);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setUncontrolledOpen;
 
   useEffect(() => {
     if (open) {
       setDraft(settings);
       setExpandedIds(new Set(settings.enrichments.map((item) => item.id)));
+      setActiveTab(initialTab);
     }
-  }, [open, settings]);
+  }, [open, settings, initialTab]);
 
   const modelOptions = useMemo(
     () => llmModels[draft.api.llm.provider] ?? llmModels.Local,
@@ -151,7 +183,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent aria-describedby="settings-description" className="max-w-3xl">
         <DialogHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -171,7 +203,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
             {t("settings.description")}
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="general">{t("settings.tabs.general")}</TabsTrigger>
             <TabsTrigger value="api">{t("settings.tabs.api")}</TabsTrigger>
@@ -243,70 +275,215 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                   />
                 </Field>
               </Section>
+              <Separator />
+              <Section
+                title={t("settings.setupWizard.title")}
+                description={t("settings.setupWizard.description")}
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setOpen(false);
+                      onOpenSetupWizard?.();
+                    }}
+                  >
+                    {t("settings.setupWizard.open")}
+                  </Button>
+                  <Badge variant="secondary">
+                    {draft.general.setupCompleted
+                      ? t("settings.setupWizard.status.complete")
+                      : t("settings.setupWizard.status.pending")}
+                  </Badge>
+                </div>
+              </Section>
             </TabsContent>
             <TabsContent value="api" className="mt-6 space-y-6">
               <Section title={t("settings.api.whisperTitle")}>
-                <Field label={t("settings.api.provider")}>
-                  <select
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    value={draft.api.whisper.provider}
-                    onChange={(event) =>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {t("settings.api.configuredProviders")}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const newId = createId();
                       setDraft((prev) => ({
                         ...prev,
                         api: {
                           ...prev.api,
-                          whisper: { ...prev.api.whisper, provider: event.target.value as any },
+                          whisper: {
+                            ...prev.api.whisper,
+                            keys: [
+                              ...(prev.api.whisper.keys || []),
+                              {
+                                id: newId,
+                                provider: "OpenAI Whisper API",
+                                apiKey: "",
+                                endpoint: whisperEndpoints["OpenAI Whisper API"],
+                              },
+                            ],
+                            activeKeyId: newId,
+                            provider: "OpenAI Whisper API",
+                          },
                         },
-                      }))
-                    }
+                      }));
+                    }}
                     disabled={draft.privacy.offline}
                   >
-                    {whisperProviders.map((provider) => (
-                      <option key={provider} value={provider}>
-                        {provider === "Local"
-                          ? t("provider.local")
-                          : provider === "OpenAI Whisper API"
-                          ? t("provider.whisperOpenAI")
-                          : t("provider.whisperOther")}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Field label={t("settings.api.apiKey")}>
-                    <Input
-                      type="password"
-                      placeholder={t("placeholder.apiKey")}
-                      value={draft.api.whisper.apiKey}
-                      onChange={(event) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          api: {
-                            ...prev.api,
-                            whisper: { ...prev.api.whisper, apiKey: event.target.value },
-                          },
-                        }))
-                      }
-                      disabled={draft.api.whisper.provider === "Local" || draft.privacy.offline}
-                    />
-                  </Field>
-                  <Field label={t("settings.api.endpoint")}>
-                    <Input
-                      placeholder={t("placeholder.endpoint")}
-                      value={draft.api.whisper.endpoint}
-                      onChange={(event) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          api: {
-                            ...prev.api,
-                            whisper: { ...prev.api.whisper, endpoint: event.target.value },
-                          },
-                        }))
-                      }
-                      disabled={draft.api.whisper.provider === "Local" || draft.privacy.offline}
-                    />
-                  </Field>
+                    <Plus className="h-4 w-4" />
+                    {t("settings.api.addEndpoint")}
+                  </Button>
                 </div>
+                {(draft.api.whisper.keys || []).length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+                    {t("settings.api.noEndpoints")}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(draft.api.whisper.keys || []).map((key, index) => {
+                      const isActive = draft.api.whisper.activeKeyId === key.id;
+                      return (
+                        <div
+                          key={key.id}
+                          className={`rounded-2xl border p-4 ${
+                            isActive ? "border-primary bg-primary/5" : "border-border bg-card"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  api: {
+                                    ...prev.api,
+                                    whisper: {
+                                      ...prev.api.whisper,
+                                      activeKeyId: key.id,
+                                      provider: key.provider as any,
+                                    },
+                                  },
+                                }));
+                              }}
+                              className="text-xs font-medium text-muted-foreground hover:text-primary"
+                            >
+                              {isActive ? "✓ " : ""}{t("settings.api.endpointEntry")} {index + 1}
+                            </button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const keys = draft.api.whisper.keys || [];
+                                const nextKeys = keys.filter((k) => k.id !== key.id);
+                                const nextActiveId =
+                                  isActive && nextKeys.length > 0
+                                    ? nextKeys[0].id
+                                    : draft.api.whisper.activeKeyId;
+                                const nextProvider =
+                                  isActive && nextKeys.length > 0
+                                    ? (nextKeys[0].provider as any)
+                                    : draft.api.whisper.provider;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  api: {
+                                    ...prev.api,
+                                    whisper: {
+                                      ...prev.api.whisper,
+                                      keys: nextKeys,
+                                      activeKeyId: nextActiveId,
+                                      provider: nextProvider,
+                                    },
+                                  },
+                                }));
+                              }}
+                              disabled={(draft.api.whisper.keys || []).length <= 1}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            <Field label={t("settings.api.provider")}>
+                              <select
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                value={key.provider}
+                                onChange={(event) => {
+                                  const newProvider = event.target.value;
+                                  const keys = [...(draft.api.whisper.keys || [])];
+                                  keys[index] = {
+                                    ...key,
+                                    provider: newProvider,
+                                    endpoint: whisperEndpoints[newProvider] || "",
+                                    apiKey: newProvider === "Local" ? "" : key.apiKey,
+                                  };
+                                  setDraft((prev) => ({
+                                    ...prev,
+                                    api: {
+                                      ...prev.api,
+                                      whisper: {
+                                        ...prev.api.whisper,
+                                        keys,
+                                        provider: isActive ? (newProvider as any) : prev.api.whisper.provider,
+                                      },
+                                    },
+                                  }));
+                                }}
+                                disabled={draft.privacy.offline}
+                              >
+                                {whisperProviders.map((provider) => (
+                                  <option key={provider} value={provider}>
+                                    {provider === "Local"
+                                      ? t("provider.local")
+                                      : provider === "OpenAI Whisper API"
+                                      ? t("provider.whisperOpenAI")
+                                      : t("provider.whisperOther")}
+                                  </option>
+                                ))}
+                              </select>
+                            </Field>
+                            {key.provider !== "Local" && (
+                              <>
+                                <Field label={t("settings.api.apiKey")}>
+                                  <Input
+                                    type="password"
+                                    placeholder={t("placeholder.apiKey")}
+                                    value={key.apiKey}
+                                    onChange={(event) => {
+                                      const keys = [...(draft.api.whisper.keys || [])];
+                                      keys[index] = { ...key, apiKey: event.target.value };
+                                      setDraft((prev) => ({
+                                        ...prev,
+                                        api: { ...prev.api, whisper: { ...prev.api.whisper, keys } },
+                                      }));
+                                    }}
+                                    disabled={draft.privacy.offline}
+                                  />
+                                </Field>
+                                <Field label={t("settings.api.endpoint")}>
+                                  <Input
+                                    placeholder={t("placeholder.endpoint")}
+                                    value={key.endpoint || ""}
+                                    onChange={(event) => {
+                                      const keys = [...(draft.api.whisper.keys || [])];
+                                      keys[index] = { ...key, endpoint: event.target.value };
+                                      setDraft((prev) => ({
+                                        ...prev,
+                                        api: { ...prev.api, whisper: { ...prev.api.whisper, keys } },
+                                      }));
+                                    }}
+                                    disabled={draft.privacy.offline}
+                                  />
+                                </Field>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <Field label={t("settings.api.language")}>
                   <select
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -328,99 +505,317 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                     ))}
                   </select>
                 </Field>
+                {draft.api.whisper.provider === "Local" && (
+                  <>
+                    <Separator />
+                    <div className="text-xs font-semibold text-muted-foreground">
+                      {t("provider.local")} Whisper
+                    </div>
+                    <Field label={t("setup.localWhisper.modelLabel")}>
+                      <Input
+                        placeholder={t("setup.localWhisper.modelPlaceholder")}
+                        value={draft.local.whisper.model}
+                        onChange={(event) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            local: {
+                              ...prev.local,
+                              whisper: { ...prev.local.whisper, model: event.target.value },
+                            },
+                          }))
+                        }
+                      />
+                    </Field>
+                    <Field label={t("setup.localWhisper.binaryLabel")}>
+                      <Input
+                        placeholder="/opt/homebrew/bin/whisper"
+                        value={draft.local.whisper.binaryPath}
+                        onChange={(event) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            local: {
+                              ...prev.local,
+                              whisper: { ...prev.local.whisper, binaryPath: event.target.value },
+                            },
+                          }))
+                        }
+                      />
+                    </Field>
+                  </>
+                )}
               </Section>
               <Separator />
               <Section title={t("settings.api.llmTitle")}>
-                <Field label={t("settings.api.provider")}>
-                  <select
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    value={draft.api.llm.provider}
-                    onChange={(event) => {
-                      const provider = event.target.value as (typeof llmProviders)[number];
-                      const nextModels = llmModels[provider] ?? llmModels.Local;
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {t("settings.api.configuredProviders")}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const newId = createId();
+                      const defaultModel = llmModels["OpenAI"][0];
                       setDraft((prev) => ({
                         ...prev,
                         api: {
                           ...prev.api,
-                          llm: { ...prev.api.llm, provider, model: nextModels[0] ?? "" },
+                          llm: {
+                            ...prev.api.llm,
+                            keys: [
+                              ...(prev.api.llm.keys || []),
+                              {
+                                id: newId,
+                                provider: "OpenAI",
+                                apiKey: "",
+                                baseUrl: llmBaseUrls["OpenAI"],
+                                model: defaultModel,
+                              },
+                            ],
+                            activeKeyId: newId,
+                            provider: "OpenAI",
+                            model: defaultModel,
+                          },
                         },
                       }));
                     }}
                     disabled={draft.privacy.offline}
                   >
-                    {llmProviders.map((provider) => (
-                      <option key={provider} value={provider}>
-                        {provider === "Local"
-                          ? t("provider.local")
-                          : provider === "OpenAI"
-                          ? t("provider.openai")
-                          : provider === "Gemini"
-                          ? t("provider.gemini")
-                          : provider === "Claude"
-                          ? t("provider.claude")
-                          : t("provider.grok")}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Field label={t("settings.api.model")}>
-                    <select
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                      value={draft.api.llm.model || modelOptions[0]}
-                      onChange={(event) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          api: {
-                            ...prev.api,
-                            llm: { ...prev.api.llm, model: event.target.value },
-                          },
-                        }))
-                      }
-                      disabled={draft.privacy.offline}
-                    >
-                      {modelOptions.map((model) => (
-                        <option key={model} value={model}>
-                          {model}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label={t("settings.api.apiKey")}>
-                    <Input
-                      type="password"
-                      placeholder={t("placeholder.apiKey")}
-                      value={draft.api.llm.apiKey}
-                      onChange={(event) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          api: {
-                            ...prev.api,
-                            llm: { ...prev.api.llm, apiKey: event.target.value },
-                          },
-                        }))
-                      }
-                      disabled={draft.api.llm.provider === "Local" || draft.privacy.offline}
-                    />
-                  </Field>
+                    <Plus className="h-4 w-4" />
+                    {t("settings.api.addEndpoint")}
+                  </Button>
                 </div>
-                <Field label={t("settings.api.baseUrl")}
-                >
-                  <Input
-                    placeholder={t("placeholder.baseUrl")}
-                    value={draft.api.llm.baseUrl}
-                    onChange={(event) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        api: {
-                          ...prev.api,
-                          llm: { ...prev.api.llm, baseUrl: event.target.value },
-                        },
-                      }))
-                    }
-                    disabled={draft.api.llm.provider === "Local" || draft.privacy.offline}
-                  />
-                </Field>
+                {(draft.api.llm.keys || []).length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+                    {t("settings.api.noEndpoints")}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(draft.api.llm.keys || []).map((key, index) => {
+                      const isActive = draft.api.llm.activeKeyId === key.id;
+                      const currentModels = llmModels[key.provider] || llmModels.Local;
+                      return (
+                        <div
+                          key={key.id}
+                          className={`rounded-2xl border p-4 ${
+                            isActive ? "border-primary bg-primary/5" : "border-border bg-card"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  api: {
+                                    ...prev.api,
+                                    llm: {
+                                      ...prev.api.llm,
+                                      activeKeyId: key.id,
+                                      provider: key.provider as any,
+                                      model: key.model || "",
+                                    },
+                                  },
+                                }));
+                              }}
+                              className="text-xs font-medium text-muted-foreground hover:text-primary"
+                            >
+                              {isActive ? "✓ " : ""}{t("settings.api.endpointEntry")} {index + 1}
+                            </button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const keys = draft.api.llm.keys || [];
+                                const nextKeys = keys.filter((k) => k.id !== key.id);
+                                const nextActiveId =
+                                  isActive && nextKeys.length > 0
+                                    ? nextKeys[0].id
+                                    : draft.api.llm.activeKeyId;
+                                const nextProvider =
+                                  isActive && nextKeys.length > 0
+                                    ? (nextKeys[0].provider as any)
+                                    : draft.api.llm.provider;
+                                const nextModel =
+                                  isActive && nextKeys.length > 0
+                                    ? nextKeys[0].model || ""
+                                    : draft.api.llm.model;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  api: {
+                                    ...prev.api,
+                                    llm: {
+                                      ...prev.api.llm,
+                                      keys: nextKeys,
+                                      activeKeyId: nextActiveId,
+                                      provider: nextProvider,
+                                      model: nextModel,
+                                    },
+                                  },
+                                }));
+                              }}
+                              disabled={(draft.api.llm.keys || []).length <= 1}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            <Field label={t("settings.api.provider")}>
+                              <select
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                value={key.provider}
+                                onChange={(event) => {
+                                  const newProvider = event.target.value;
+                                  const newModels = llmModels[newProvider] || llmModels.Local;
+                                  const keys = [...(draft.api.llm.keys || [])];
+                                  keys[index] = {
+                                    ...key,
+                                    provider: newProvider,
+                                    baseUrl: llmBaseUrls[newProvider] || "",
+                                    model: newModels[0] || "",
+                                    apiKey: newProvider === "Local" ? "" : key.apiKey,
+                                  };
+                                  setDraft((prev) => ({
+                                    ...prev,
+                                    api: {
+                                      ...prev.api,
+                                      llm: {
+                                        ...prev.api.llm,
+                                        keys,
+                                        provider: isActive ? (newProvider as any) : prev.api.llm.provider,
+                                        model: isActive ? (newModels[0] || "") : prev.api.llm.model,
+                                      },
+                                    },
+                                  }));
+                                }}
+                                disabled={draft.privacy.offline}
+                              >
+                                {llmProviders.map((provider) => (
+                                  <option key={provider} value={provider}>
+                                    {provider === "Local"
+                                      ? t("provider.local")
+                                      : provider === "OpenAI"
+                                      ? t("provider.openai")
+                                      : provider === "Gemini"
+                                      ? t("provider.gemini")
+                                      : provider === "Claude"
+                                      ? t("provider.claude")
+                                      : provider === "Grok"
+                                      ? t("provider.grok")
+                                      : provider === "OpenRouter"
+                                      ? t("provider.openrouter")
+                                      : t("provider.custom")}
+                                  </option>
+                                ))}
+                              </select>
+                            </Field>
+                            <Field label={t("settings.api.model")}>
+                              <select
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                value={key.model || currentModels[0]}
+                                onChange={(event) => {
+                                  const keys = [...(draft.api.llm.keys || [])];
+                                  keys[index] = { ...key, model: event.target.value };
+                                  setDraft((prev) => ({
+                                    ...prev,
+                                    api: {
+                                      ...prev.api,
+                                      llm: {
+                                        ...prev.api.llm,
+                                        keys,
+                                        model: isActive ? event.target.value : prev.api.llm.model,
+                                      },
+                                    },
+                                  }));
+                                }}
+                                disabled={draft.privacy.offline}
+                              >
+                                {currentModels.map((model) => (
+                                  <option key={model} value={model}>
+                                    {model}
+                                  </option>
+                                ))}
+                              </select>
+                            </Field>
+                            {key.provider !== "Local" && (
+                              <>
+                                <Field label={t("settings.api.apiKey")}>
+                                  <Input
+                                    type="password"
+                                    placeholder={t("placeholder.apiKey")}
+                                    value={key.apiKey}
+                                    onChange={(event) => {
+                                      const keys = [...(draft.api.llm.keys || [])];
+                                      keys[index] = { ...key, apiKey: event.target.value };
+                                      setDraft((prev) => ({
+                                        ...prev,
+                                        api: { ...prev.api, llm: { ...prev.api.llm, keys } },
+                                      }));
+                                    }}
+                                    disabled={draft.privacy.offline}
+                                  />
+                                </Field>
+                                <Field label={t("settings.api.baseUrl")}>
+                                  <Input
+                                    placeholder={t("placeholder.baseUrl")}
+                                    value={key.baseUrl || ""}
+                                    onChange={(event) => {
+                                      const keys = [...(draft.api.llm.keys || [])];
+                                      keys[index] = { ...key, baseUrl: event.target.value };
+                                      setDraft((prev) => ({
+                                        ...prev,
+                                        api: { ...prev.api, llm: { ...prev.api.llm, keys } },
+                                      }));
+                                    }}
+                                    disabled={draft.privacy.offline}
+                                  />
+                                </Field>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {draft.api.llm.provider === "Local" && (
+                  <>
+                    <Separator />
+                    <div className="text-xs font-semibold text-muted-foreground">
+                      Ollama
+                    </div>
+                    <Field label={t("setup.ollama.baseUrl")}>
+                      <Input
+                        placeholder="http://127.0.0.1:11434"
+                        value={draft.local.llm.ollamaBaseUrl}
+                        onChange={(event) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            local: {
+                              ...prev.local,
+                              llm: { ...prev.local.llm, ollamaBaseUrl: event.target.value },
+                            },
+                          }))
+                        }
+                      />
+                    </Field>
+                    <Field label={t("setup.ollama.model")}>
+                      <Input
+                        placeholder="llama3.2"
+                        value={draft.local.llm.ollamaModel}
+                        onChange={(event) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            local: {
+                              ...prev.local,
+                              llm: { ...prev.local.llm, ollamaModel: event.target.value },
+                            },
+                          }))
+                        }
+                      />
+                    </Field>
+                  </>
+                )}
               </Section>
               <Separator />
               <Section title={t("settings.privacy.title")}

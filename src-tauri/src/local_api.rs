@@ -396,17 +396,43 @@ fn ffmpeg_names() -> Vec<&'static str> {
   }
 }
 
-fn ffmpeg_candidates(app: &AppHandle) -> Vec<PathBuf> {
+fn ffmpeg_from_settings(state: &AppState) -> Option<PathBuf> {
+  let conn = state.db.lock().ok()?;
+  let result: Result<String, _> =
+    conn.query_row("SELECT json FROM settings WHERE id = 1;", [], |row| row.get(0));
+  let json_str = result.ok()?;
+  let value: Value = serde_json::from_str(&json_str).ok()?;
+  let direct = value.get("ffmpegPath").and_then(|path| path.as_str());
+  let legacy = value
+    .get("paths")
+    .and_then(|paths| paths.get("ffmpegPath"))
+    .and_then(|path| path.as_str());
+  let resolved = direct.or(legacy)?.trim();
+  if resolved.is_empty() {
+    return None;
+  }
+  let candidate = PathBuf::from(resolved);
+  if candidate.is_file() {
+    Some(candidate)
+  } else {
+    None
+  }
+}
+
+fn ffmpeg_candidates(state: &AppState) -> Vec<PathBuf> {
   let mut candidates = Vec::new();
   if let Ok(path) = std::env::var("FFMPEG_PATH") {
     candidates.push(PathBuf::from(path));
   }
-  if let Ok(app_data) = app.path().app_data_dir() {
+  if let Some(candidate) = ffmpeg_from_settings(state) {
+    candidates.push(candidate);
+  }
+  if let Ok(app_data) = state.app.path().app_data_dir() {
     for name in ffmpeg_names() {
       candidates.push(app_data.join("ffmpeg").join(name));
     }
   }
-  if let Ok(resource_dir) = app.path().resource_dir() {
+  if let Ok(resource_dir) = state.app.path().resource_dir() {
     for name in ffmpeg_names() {
       candidates.push(resource_dir.join(name));
       candidates.push(resource_dir.join("bin").join(name));
@@ -423,8 +449,8 @@ fn ffmpeg_candidates(app: &AppHandle) -> Vec<PathBuf> {
   candidates
 }
 
-fn resolve_ffmpeg(app: &AppHandle) -> Option<PathBuf> {
-  for candidate in ffmpeg_candidates(app) {
+fn resolve_ffmpeg(state: &AppState) -> Option<PathBuf> {
+  for candidate in ffmpeg_candidates(state) {
     if candidate.is_absolute() {
       if candidate.exists() {
         return Some(candidate);
@@ -467,7 +493,7 @@ fn maybe_convert_audio(
   if output_path.exists() {
     return Some((output_filename, "audio/wav".to_string()));
   }
-  let ffmpeg = match resolve_ffmpeg(&state.app) {
+  let ffmpeg = match resolve_ffmpeg(state) {
     Some(path) => path,
     None => {
       eprintln!("ffmpeg not found; skipping audio conversion");

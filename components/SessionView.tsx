@@ -96,6 +96,101 @@ export function SessionView() {
   const locale = toIntlLocale(settings.general.language);
   const templates = settings.enrichments;
 
+  const whisperProviderOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    const addOption = (value: string, label: string) => {
+      if (!options.find((item) => item.value === value)) {
+        options.push({ value, label });
+      }
+    };
+    if (settings.local.whisper.installed || settings.api.whisper.provider === "Local") {
+      addOption("Local", t("provider.local"));
+    }
+    (settings.api.whisper.keys ?? []).forEach((entry) => {
+      if (entry.provider === "OpenAI Whisper API") {
+        addOption(entry.provider, t("provider.whisperOpenAI"));
+      } else if (entry.provider === "Other" || entry.provider === "Custom") {
+        addOption(entry.provider, t("provider.whisperOther"));
+      } else if (entry.provider) {
+        addOption(entry.provider, entry.provider);
+      }
+    });
+    if (!options.length) {
+      addOption(settings.api.whisper.provider, settings.api.whisper.provider);
+    }
+    return options;
+  }, [settings.api.whisper.keys, settings.api.whisper.provider, settings.local.whisper.installed, t]);
+
+  const llmProviderOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    const addOption = (value: string, label: string) => {
+      if (!options.find((item) => item.value === value)) {
+        options.push({ value, label });
+      }
+    };
+    if (settings.local.llm.available || settings.api.llm.provider === "Local") {
+      addOption("Local", t("provider.local"));
+    }
+    (settings.api.llm.keys ?? []).forEach((entry) => {
+      if (entry.provider === "OpenAI") {
+        addOption(entry.provider, t("provider.openai"));
+      } else if (entry.provider === "Gemini") {
+        addOption(entry.provider, t("provider.gemini"));
+      } else if (entry.provider === "Claude") {
+        addOption(entry.provider, t("provider.claude"));
+      } else if (entry.provider === "Grok") {
+        addOption(entry.provider, t("provider.grok"));
+      } else if (entry.provider === "OpenRouter") {
+        addOption(entry.provider, t("provider.openrouter"));
+      } else if (entry.provider === "Custom") {
+        addOption(entry.provider, t("provider.custom"));
+      } else if (entry.provider) {
+        addOption(entry.provider, entry.provider);
+      }
+    });
+    if (!options.length) {
+      addOption(settings.api.llm.provider, settings.api.llm.provider);
+    }
+    return options;
+  }, [settings.api.llm.keys, settings.api.llm.provider, settings.local.llm.available, t]);
+
+  const handleWhisperProviderChange = (provider: string) => {
+    const keys = settings.api.whisper.keys ?? [];
+    const nextKey = keys.find((entry) => entry.provider === provider);
+    void actions.updateSettings({
+      ...settings,
+      api: {
+        ...settings.api,
+        whisper: {
+          ...settings.api.whisper,
+          provider: provider as any,
+          activeKeyId: nextKey?.id,
+          apiKey: nextKey?.apiKey ?? settings.api.whisper.apiKey,
+          endpoint: nextKey?.endpoint ?? settings.api.whisper.endpoint,
+        },
+      },
+    });
+  };
+
+  const handleLlmProviderChange = (provider: string) => {
+    const keys = settings.api.llm.keys ?? [];
+    const nextKey = keys.find((entry) => entry.provider === provider);
+    void actions.updateSettings({
+      ...settings,
+      api: {
+        ...settings.api,
+        llm: {
+          ...settings.api.llm,
+          provider: provider as any,
+          activeKeyId: nextKey?.id,
+          apiKey: nextKey?.apiKey ?? settings.api.llm.apiKey,
+          baseUrl: nextKey?.baseUrl ?? settings.api.llm.baseUrl,
+          model: nextKey?.model ?? settings.api.llm.model,
+        },
+      },
+    });
+  };
+
   useEffect(() => {
     setTitleValue(activeSession?.title ?? "");
   }, [activeSession?.id, activeSession?.title]);
@@ -125,6 +220,12 @@ export function SessionView() {
         language={settings.general.language}
         elapsedSeconds={0}
         level={0}
+        whisperProviders={whisperProviderOptions}
+        llmProviders={llmProviderOptions}
+        selectedWhisperProvider={settings.api.whisper.provider}
+        selectedLlmProvider={settings.api.llm.provider}
+        onWhisperProviderChange={handleWhisperProviderChange}
+        onLlmProviderChange={handleLlmProviderChange}
         onModeChange={actions.setMode}
         onStart={actions.startRecording}
         onStop={actions.stopRecording}
@@ -143,6 +244,12 @@ export function SessionView() {
         language={settings.general.language}
         elapsedSeconds={elapsedSeconds}
         level={recordingLevel}
+        whisperProviders={whisperProviderOptions}
+        llmProviders={llmProviderOptions}
+        selectedWhisperProvider={settings.api.whisper.provider}
+        selectedLlmProvider={settings.api.llm.provider}
+        onWhisperProviderChange={handleWhisperProviderChange}
+        onLlmProviderChange={handleLlmProviderChange}
         onModeChange={actions.setMode}
         onStart={actions.startRecording}
         onStop={actions.stopRecording}

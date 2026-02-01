@@ -17,6 +17,12 @@ type RecorderPanelProps = {
   language: Locale;
   elapsedSeconds: number;
   level?: number;
+  whisperProviders: { value: string; label: string }[];
+  llmProviders: { value: string; label: string }[];
+  selectedWhisperProvider: string;
+  selectedLlmProvider: string;
+  onWhisperProviderChange: (value: string) => void;
+  onLlmProviderChange: (value: string) => void;
   onModeChange: (mode: Mode) => void;
   onStart: () => void | Promise<void>;
   onStop: () => void;
@@ -31,6 +37,12 @@ export function RecorderPanel({
   language,
   elapsedSeconds,
   level = 0,
+  whisperProviders,
+  llmProviders,
+  selectedWhisperProvider,
+  selectedLlmProvider,
+  onWhisperProviderChange,
+  onLlmProviderChange,
   onModeChange,
   onStart,
   onStop,
@@ -74,6 +86,40 @@ export function RecorderPanel({
           })}
         </div>
       )}
+      <div className="mt-8 w-full max-w-xl">
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="grid gap-2 text-xs font-medium text-muted-foreground">
+            <span>{t("recorder.whisperProvider")}</span>
+            <select
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={selectedWhisperProvider}
+              onChange={(event) => onWhisperProviderChange(event.target.value)}
+              disabled={isRecording}
+            >
+              {whisperProviders.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-2 text-xs font-medium text-muted-foreground">
+            <span>{t("recorder.llmProvider")}</span>
+            <select
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={selectedLlmProvider}
+              onChange={(event) => onLlmProviderChange(event.target.value)}
+              disabled={isRecording}
+            >
+              {llmProviders.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
         {templates.map((option) => {
           const Icon = getIconById(option.icon);
