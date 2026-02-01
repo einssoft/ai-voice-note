@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { getDefaultEnrichments } from "@/lib/mock";
+import { getDefaultEnrichments, getDefaultKeywordsPrompt } from "@/lib/mock";
 
 const llmModels: Record<string, string[]> = {
   Local: ["Local Default", "Local Small", "Local Large"],
@@ -160,6 +160,8 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
               {t("settings.source.label")}:{" "}
               {settingsSource === "tauri"
                 ? t("settings.source.tauri")
+                : settingsSource === "api"
+                ? t("settings.source.api")
                 : settingsSource === "local"
                 ? t("settings.source.local")
                 : t("settings.source.default")}
@@ -225,6 +227,17 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                       setDraft((prev) => ({
                         ...prev,
                         general: { ...prev.general, hotkey: event.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label={t("settings.general.cancelHotkeyLabel")}>
+                  <Input
+                    value={draft.general.cancelHotkey}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        general: { ...prev.general, cancelHotkey: event.target.value },
                       }))
                     }
                   />
@@ -565,6 +578,38 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                     </div>
                   )}
                 </div>
+              </Section>
+              <Separator />
+              <Section
+                title={t("settings.keywords.title")}
+                description={t("settings.keywords.description")}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        keywordsPrompt: getDefaultKeywordsPrompt(prev.general.language),
+                      }))
+                    }
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    {t("settings.keywords.reset")}
+                  </Button>
+                </div>
+                <Field label={t("settings.keywords.prompt")}>
+                  <textarea
+                    className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={draft.keywordsPrompt}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        keywordsPrompt: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
               </Section>
             </TabsContent>
           </div>

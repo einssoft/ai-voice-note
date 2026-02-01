@@ -1,16 +1,16 @@
 (globalThis.TURBOPACK || (globalThis.TURBOPACK = [])).push([typeof document === "object" ? document.currentScript : undefined,
 "[project]/locales/de.json (json)", ((__turbopack_context__) => {
 
-__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Theme","app.settings":"Einstellungen","sidebar.title":"Deine Notizen","sidebar.new":"Neu","sidebar.search":"Suchen","sidebar.empty":"Keine Sessions gefunden.","sidebar.previewEmpty":"Noch kein Inhalt.","recorder.ready":"Bereit zur Aufnahme","recorder.recording":"Aufnahme läuft...","recorder.pressHotkey":"Drücke {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Audio hochladen","processing.title":"Session wird verarbeitet","processing.subtitle":"Bitte dieses Fenster geöffnet lassen.","processing.audioPreview":"Audio-Vorschau","steps.recording":"Aufnahme","steps.transcribing":"Transkribieren","steps.enriching":"Anreichern","error.title":"Etwas ist schiefgelaufen","error.fallback":"Die Session konnte nicht verarbeitet werden. Prüfe die Provider-Einstellungen und versuche es erneut.","error.retry":"Erneut versuchen","error.report":"Melden","error.details":"Details","tabs.enriched":"Anreicherung","tabs.transcript":"Transkript","tabs.metadata":"Metadaten","buttons.copy":"Kopieren","buttons.copyMarkdown":"Markdown kopieren","buttons.save":"Speichern...","buttons.openFolder":"Ordner öffnen","buttons.cancel":"Abbrechen","buttons.saveSettings":"Speichern","feedback.copied":"In Zwischenablage kopiert.","feedback.copiedMarkdown":"Markdown kopiert.","feedback.copyFailed":"Kopieren fehlgeschlagen.","feedback.saved":"Datei gespeichert.","feedback.saveFailed":"Speichern fehlgeschlagen.","feedback.openFolderFailed":"Ordner kann hier nicht geöffnet werden.","metadata.created":"Erstellt","metadata.duration":"Dauer","metadata.mode":"Modus","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Keywords","metadata.audio":"Audio","metadata.noAudio":"Kein Audio vorhanden","settings.title":"Einstellungen","settings.description":"Passe Erscheinungsbild, Provider und Prompt-Vorlagen an.","settings.tabs.general":"Allgemein","settings.tabs.api":"API Keys","settings.tabs.enrichments":"Anreicherungen","settings.general.appearance":"Erscheinungsbild","settings.general.theme":"Theme","settings.general.language":"Sprache","settings.general.hotkey":"Hotkey","settings.general.hotkeyLabel":"Globaler Hotkey","settings.api.whisperTitle":"Whisper (Transkription)","settings.api.provider":"Provider","settings.api.apiKey":"API Key","settings.api.endpoint":"Endpoint (optional)","settings.api.language":"Sprache","settings.api.llmTitle":"LLM (Anreicherung)","settings.api.model":"Modell","settings.api.baseUrl":"Base URL (optional)","settings.privacy.title":"Privacy Mode","settings.privacy.offline":"Offline-first (kein Netzwerk)","settings.privacy.storeAudio":"Audio lokal speichern","settings.enrichments.title":"Prompt-Vorlagen","settings.enrichments.description":"Verwalte Ausgabe-Templates und Prompts für die Transkript-Anreicherung.","settings.enrichments.add":"Enrichment hinzufügen","settings.enrichments.name":"Name","settings.enrichments.icon":"Icon","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Löschen","settings.enrichments.empty":"Noch keine Enrichments.","settings.enrichments.newName":"Neues Enrichment","theme.system":"System","theme.light":"Hell","theme.dark":"Dunkel","language.de":"Deutsch","language.en":"Englisch","language.fr":"Französisch","language.it":"Italienisch","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Other","enrichment.smart":"Smart Notes","enrichment.tasks":"Aufgabenliste","enrichment.meeting":"Meeting-Notizen","enrichment.email":"E-Mail Entwurf","enrichment.prompt.smart":"Erstelle Smart Notes mit:\\n- Kurze Zusammenfassung\\n- Entscheidungen\\n- Naechste Schritte","enrichment.prompt.tasks":"Extrahiere alle Aufgaben und To-dos als kurze Liste. Halte jeden Punkt knapp.","enrichment.prompt.meeting":"Erstelle strukturierte Meeting-Notizen:\\n- Zusammenfassung\\n- Kernthemen\\n- Entscheidungen\\n- Action Items","enrichment.prompt.email":"Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript. Fuege eine Betreffzeile hinzu.","common.untitled":"Ohne Titel","aria.sessionTitle":"Session-Titel","aria.searchSessions":"Sessions durchsuchen","aria.deleteNote":"Notiz löschen","aria.toggleTheme":"Theme wechseln","aria.pause":"Pause","aria.play":"Abspielen","aria.seekAudio":"Audio suchen","aria.startRecording":"Aufnahme starten","aria.stopRecording":"Aufnahme stoppen","aria.resizeSidebar":"Seitenleiste anpassen","aria.close":"Schließen","errors.microphoneUnsupported":"Mikrofonzugriff wird in dieser Umgebung nicht unterstützt.","errors.microphoneDenied":"Mikrofonzugriff wurde verweigert. Bitte erlaube den Zugriff und versuche es erneut.","errors.noAudioCaptured":"Kein Audio erfasst. Bitte Mikrofon prüfen.","errors.recordingError":"Beim Aufnehmen ist ein Fehler aufgetreten.","errors.audioRetryUnavailable":"Audio-Datei für den Retry nicht verfügbar.","errors.audioTooLarge":"Audio-Datei ist größer als 25MB. Bitte kürzer aufnehmen.","errors.offlineMode":"Offline-Modus ist aktiv. Deaktiviere ihn für Cloud-Verarbeitung.","errors.localTranscription":"Lokale Transkription ist nicht konfiguriert.","errors.localLlm":"Lokales LLM ist nicht konfiguriert.","errors.missingWhisperKey":"Whisper API-Key fehlt in den Einstellungen.","errors.missingLlmKey":"LLM API-Key fehlt in den Einstellungen.","errors.customWhisperEndpointRequired":"Custom Whisper Endpoint ist erforderlich.","errors.baseUrlRequired":"Base URL ist für Nicht-OpenAI-Provider erforderlich.","errors.noTranscript":"Kein Transkript zum Anreichern vorhanden.","errors.audioBlobMissingDetails":"Audio-Daten nicht gefunden. Bitte erneut aufnehmen oder Datei neu hochladen.","errors.transcriptionFailed":"Transkription fehlgeschlagen.","errors.enrichmentFailed":"Anreicherung fehlgeschlagen.","file.defaultName":"voice-note","errorDetails.stage":"Phase","errorDetails.whisperProvider":"Whisper-Provider","errorDetails.llmProvider":"LLM-Provider","errorDetails.whisperEndpoint":"Whisper-Endpoint","errorDetails.llmBaseUrl":"LLM Base URL","errorDetails.message":"Meldung","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Auf Standard zurücksetzen","settings.source.label":"Quelle","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Standard"});}),
+__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Theme","app.settings":"Einstellungen","sidebar.title":"Deine Notizen","sidebar.new":"Neu","sidebar.search":"Suchen","sidebar.empty":"Keine Sessions gefunden.","sidebar.previewEmpty":"Noch kein Inhalt.","recorder.ready":"Bereit zur Aufnahme","recorder.recording":"Aufnahme läuft...","recorder.pressHotkey":"Drücke {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Audio hochladen","processing.title":"Session wird verarbeitet","processing.subtitle":"Bitte dieses Fenster geöffnet lassen.","processing.audioPreview":"Audio-Vorschau","steps.recording":"Aufnahme","steps.transcribing":"Transkribieren","steps.enriching":"Anreichern","error.title":"Etwas ist schiefgelaufen","error.fallback":"Die Session konnte nicht verarbeitet werden. Prüfe die Provider-Einstellungen und versuche es erneut.","error.retry":"Erneut versuchen","error.report":"Melden","error.details":"Details","tabs.enriched":"Anreicherung","tabs.transcript":"Transkript","tabs.metadata":"Metadaten","buttons.copy":"Kopieren","buttons.copyMarkdown":"Markdown kopieren","buttons.save":"Speichern...","buttons.openFolder":"Ordner öffnen","buttons.cancel":"Abbrechen","buttons.saveSettings":"Speichern","feedback.copied":"In Zwischenablage kopiert.","feedback.copiedMarkdown":"Markdown kopiert.","feedback.copyFailed":"Kopieren fehlgeschlagen.","feedback.saved":"Datei gespeichert.","feedback.saveFailed":"Speichern fehlgeschlagen.","feedback.openFolderFailed":"Ordner kann hier nicht geöffnet werden.","metadata.created":"Erstellt","metadata.duration":"Dauer","metadata.mode":"Modus","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Keywords","metadata.audio":"Audio","metadata.noAudio":"Kein Audio vorhanden","settings.title":"Einstellungen","settings.description":"Passe Erscheinungsbild, Provider und Prompt-Vorlagen an.","settings.tabs.general":"Allgemein","settings.tabs.api":"API Keys","settings.tabs.enrichments":"Anreicherungen","settings.general.appearance":"Erscheinungsbild","settings.general.theme":"Theme","settings.general.language":"Sprache","settings.general.hotkey":"Hotkey","settings.general.hotkeyLabel":"Globaler Hotkey","settings.api.whisperTitle":"Whisper (Transkription)","settings.api.provider":"Provider","settings.api.apiKey":"API Key","settings.api.endpoint":"Endpoint (optional)","settings.api.language":"Sprache","settings.api.llmTitle":"LLM (Anreicherung)","settings.api.model":"Modell","settings.api.baseUrl":"Base URL (optional)","settings.privacy.title":"Privacy Mode","settings.privacy.offline":"Offline-first (kein Netzwerk)","settings.privacy.storeAudio":"Audio lokal speichern","settings.enrichments.title":"Prompt-Vorlagen","settings.enrichments.description":"Verwalte Ausgabe-Templates und Prompts für die Transkript-Anreicherung.","settings.enrichments.add":"Enrichment hinzufügen","settings.enrichments.name":"Name","settings.enrichments.icon":"Icon","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Löschen","settings.enrichments.empty":"Noch keine Enrichments.","settings.enrichments.newName":"Neues Enrichment","settings.keywords.title":"Keywords","settings.keywords.description":"Prompt für die Keyword-Extraktion per LLM.","settings.keywords.prompt":"Keyword-Prompt","settings.keywords.reset":"Auf Standard zurücksetzen","theme.system":"System","theme.light":"Hell","theme.dark":"Dunkel","language.de":"Deutsch","language.en":"Englisch","language.fr":"Französisch","language.it":"Italienisch","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Other","enrichment.smart":"Smart Notes","enrichment.tasks":"Aufgabenliste","enrichment.meeting":"Meeting-Notizen","enrichment.email":"E-Mail Entwurf","enrichment.prompt.smart":"Erstelle Smart Notes mit:\\n- Kurze Zusammenfassung\\n- Entscheidungen\\n- Naechste Schritte","enrichment.prompt.tasks":"Extrahiere alle Aufgaben und To-dos als kurze Liste. Halte jeden Punkt knapp.","enrichment.prompt.meeting":"Erstelle strukturierte Meeting-Notizen:\\n- Zusammenfassung\\n- Kernthemen\\n- Entscheidungen\\n- Action Items","enrichment.prompt.email":"Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript. Fuege eine Betreffzeile hinzu.","keywords.defaultPrompt":"Extrahiere 4-6 praegnante Keywords oder kurze Schluesselphrasen aus dem Transkript. Gib ausschließlich ein JSON-Array von Strings zurueck.","common.untitled":"Ohne Titel","aria.sessionTitle":"Session-Titel","aria.searchSessions":"Sessions durchsuchen","aria.deleteNote":"Notiz löschen","aria.toggleTheme":"Theme wechseln","aria.pause":"Pause","aria.play":"Abspielen","aria.seekAudio":"Audio suchen","aria.startRecording":"Aufnahme starten","aria.stopRecording":"Aufnahme stoppen","aria.resizeSidebar":"Seitenleiste anpassen","aria.close":"Schließen","errors.microphoneUnsupported":"Mikrofonzugriff wird in dieser Umgebung nicht unterstützt.","errors.microphoneDenied":"Mikrofonzugriff wurde verweigert. Bitte erlaube den Zugriff und versuche es erneut.","errors.noAudioCaptured":"Kein Audio erfasst. Bitte Mikrofon prüfen.","errors.recordingError":"Beim Aufnehmen ist ein Fehler aufgetreten.","errors.audioRetryUnavailable":"Audio-Datei für den Retry nicht verfügbar.","errors.audioTooLarge":"Audio-Datei ist größer als 25MB. Bitte kürzer aufnehmen.","errors.offlineMode":"Offline-Modus ist aktiv. Deaktiviere ihn für Cloud-Verarbeitung.","errors.localTranscription":"Lokale Transkription ist nicht konfiguriert.","errors.localLlm":"Lokales LLM ist nicht konfiguriert.","errors.missingWhisperKey":"Whisper API-Key fehlt in den Einstellungen.","errors.missingLlmKey":"LLM API-Key fehlt in den Einstellungen.","errors.customWhisperEndpointRequired":"Custom Whisper Endpoint ist erforderlich.","errors.baseUrlRequired":"Base URL ist für Nicht-OpenAI-Provider erforderlich.","errors.noTranscript":"Kein Transkript zum Anreichern vorhanden.","errors.audioBlobMissingDetails":"Audio-Daten nicht gefunden. Bitte erneut aufnehmen oder Datei neu hochladen.","errors.transcriptionFailed":"Transkription fehlgeschlagen.","errors.enrichmentFailed":"Anreicherung fehlgeschlagen.","file.defaultName":"voice-note","errorDetails.stage":"Phase","errorDetails.whisperProvider":"Whisper-Provider","errorDetails.llmProvider":"LLM-Provider","errorDetails.whisperEndpoint":"Whisper-Endpoint","errorDetails.llmBaseUrl":"LLM Base URL","errorDetails.message":"Meldung","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Auf Standard zurücksetzen","settings.source.label":"Quelle","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Standard"});}),
 "[project]/locales/en.json (json)", ((__turbopack_context__) => {
 
-__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Theme","app.settings":"Settings","sidebar.title":"Your Notes","sidebar.new":"New","sidebar.search":"Search","sidebar.empty":"No sessions found.","sidebar.previewEmpty":"No content yet.","recorder.ready":"Ready to record","recorder.recording":"Recording...","recorder.pressHotkey":"Press {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Upload audio","processing.title":"Processing session","processing.subtitle":"Please keep this window open.","processing.audioPreview":"Audio preview","steps.recording":"Recording","steps.transcribing":"Transcribing","steps.enriching":"Enriching","error.title":"Something went wrong","error.fallback":"The session could not be processed. Check your provider settings and try again.","error.retry":"Retry","error.report":"Report","error.details":"Details","tabs.enriched":"Enriched","tabs.transcript":"Transcript","tabs.metadata":"Metadata","buttons.copy":"Copy","buttons.copyMarkdown":"Copy Markdown","buttons.save":"Save...","buttons.openFolder":"Open Folder","buttons.cancel":"Cancel","buttons.saveSettings":"Save","feedback.copied":"Copied to clipboard.","feedback.copiedMarkdown":"Markdown copied.","feedback.copyFailed":"Copy failed.","feedback.saved":"File saved.","feedback.saveFailed":"Save failed.","feedback.openFolderFailed":"Open folder not supported here.","metadata.created":"Created","metadata.duration":"Duration","metadata.mode":"Mode","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Keywords","metadata.audio":"Audio","metadata.noAudio":"No audio captured","settings.title":"Settings","settings.description":"Configure appearance, providers, and enrichment templates.","settings.tabs.general":"General","settings.tabs.api":"API Keys","settings.tabs.enrichments":"Enrichments","settings.general.appearance":"Appearance","settings.general.theme":"Theme","settings.general.language":"Language","settings.general.hotkey":"Hotkey","settings.general.hotkeyLabel":"Global Hotkey","settings.api.whisperTitle":"Whisper (Transcription)","settings.api.provider":"Provider","settings.api.apiKey":"API Key","settings.api.endpoint":"Endpoint (optional)","settings.api.language":"Language","settings.api.llmTitle":"LLM (Enrichment)","settings.api.model":"Model","settings.api.baseUrl":"Base URL (optional)","settings.privacy.title":"Privacy Mode","settings.privacy.offline":"Offline-first (no network)","settings.privacy.storeAudio":"Store audio files locally","settings.enrichments.title":"Prompt Templates","settings.enrichments.description":"Manage output templates and prompts for transcript enrichment.","settings.enrichments.add":"Add enrichment","settings.enrichments.name":"Name","settings.enrichments.icon":"Icon","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Delete","settings.enrichments.empty":"No enrichments yet.","settings.enrichments.newName":"New enrichment","theme.system":"System","theme.light":"Light","theme.dark":"Dark","language.de":"Deutsch","language.en":"English","language.fr":"Français","language.it":"Italiano","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Other","enrichment.smart":"Smart Notes","enrichment.tasks":"Tasks","enrichment.meeting":"Meeting Notes","enrichment.email":"Email Draft","enrichment.prompt.smart":"Create smart notes with:\\n- Short summary\\n- Decisions\\n- Next steps","enrichment.prompt.tasks":"Extract all action items and tasks as a short bullet list. Keep each item concise.","enrichment.prompt.meeting":"Create well-structured meeting notes:\\n- Summary\\n- Key points\\n- Decisions\\n- Action items","enrichment.prompt.email":"Draft a concise professional email based on the transcript. Include a subject line.","common.untitled":"Untitled","aria.sessionTitle":"Session title","aria.searchSessions":"Search sessions","aria.deleteNote":"Delete note","aria.toggleTheme":"Toggle theme","aria.pause":"Pause","aria.play":"Play","aria.seekAudio":"Seek audio","aria.startRecording":"Start recording","aria.stopRecording":"Stop recording","aria.resizeSidebar":"Resize sidebar","aria.close":"Close","errors.microphoneUnsupported":"Microphone access is not supported in this environment.","errors.microphoneDenied":"Microphone access was denied. Please allow access and try again.","errors.noAudioCaptured":"No audio captured. Please check microphone input.","errors.recordingError":"Recording error occurred.","errors.audioRetryUnavailable":"Audio file not available for retry.","errors.audioTooLarge":"Audio file is larger than 25MB. Please record a shorter clip.","errors.offlineMode":"Offline mode is enabled. Disable it to use cloud processing.","errors.localTranscription":"Local transcription is not configured.","errors.localLlm":"Local LLM is not configured.","errors.missingWhisperKey":"Missing Whisper API key in Settings.","errors.missingLlmKey":"Missing LLM API key in Settings.","errors.customWhisperEndpointRequired":"Custom Whisper endpoint is required.","errors.baseUrlRequired":"Base URL is required for non-OpenAI providers.","errors.noTranscript":"No transcript to enrich.","errors.audioBlobMissingDetails":"Audio blob not found. Try recording again or re-upload the file.","errors.transcriptionFailed":"Transcription failed.","errors.enrichmentFailed":"Enrichment failed.","file.defaultName":"voice-note","errorDetails.stage":"Stage","errorDetails.whisperProvider":"Whisper provider","errorDetails.llmProvider":"LLM provider","errorDetails.whisperEndpoint":"Whisper endpoint","errorDetails.llmBaseUrl":"LLM base URL","errorDetails.message":"Message","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Reset to defaults","settings.source.label":"Source","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Defaults"});}),
+__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Theme","app.settings":"Settings","sidebar.title":"Your Notes","sidebar.new":"New","sidebar.search":"Search","sidebar.empty":"No sessions found.","sidebar.previewEmpty":"No content yet.","recorder.ready":"Ready to record","recorder.recording":"Recording...","recorder.pressHotkey":"Press {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Upload audio","processing.title":"Processing session","processing.subtitle":"Please keep this window open.","processing.audioPreview":"Audio preview","steps.recording":"Recording","steps.transcribing":"Transcribing","steps.enriching":"Enriching","error.title":"Something went wrong","error.fallback":"The session could not be processed. Check your provider settings and try again.","error.retry":"Retry","error.report":"Report","error.details":"Details","tabs.enriched":"Enriched","tabs.transcript":"Transcript","tabs.metadata":"Metadata","buttons.copy":"Copy","buttons.copyMarkdown":"Copy Markdown","buttons.save":"Save...","buttons.openFolder":"Open Folder","buttons.cancel":"Cancel","buttons.saveSettings":"Save","feedback.copied":"Copied to clipboard.","feedback.copiedMarkdown":"Markdown copied.","feedback.copyFailed":"Copy failed.","feedback.saved":"File saved.","feedback.saveFailed":"Save failed.","feedback.openFolderFailed":"Open folder not supported here.","metadata.created":"Created","metadata.duration":"Duration","metadata.mode":"Mode","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Keywords","metadata.audio":"Audio","metadata.noAudio":"No audio captured","settings.title":"Settings","settings.description":"Configure appearance, providers, and enrichment templates.","settings.tabs.general":"General","settings.tabs.api":"API Keys","settings.tabs.enrichments":"Enrichments","settings.general.appearance":"Appearance","settings.general.theme":"Theme","settings.general.language":"Language","settings.general.hotkey":"Hotkey","settings.general.hotkeyLabel":"Global Hotkey","settings.api.whisperTitle":"Whisper (Transcription)","settings.api.provider":"Provider","settings.api.apiKey":"API Key","settings.api.endpoint":"Endpoint (optional)","settings.api.language":"Language","settings.api.llmTitle":"LLM (Enrichment)","settings.api.model":"Model","settings.api.baseUrl":"Base URL (optional)","settings.privacy.title":"Privacy Mode","settings.privacy.offline":"Offline-first (no network)","settings.privacy.storeAudio":"Store audio files locally","settings.enrichments.title":"Prompt Templates","settings.enrichments.description":"Manage output templates and prompts for transcript enrichment.","settings.enrichments.add":"Add enrichment","settings.enrichments.name":"Name","settings.enrichments.icon":"Icon","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Delete","settings.enrichments.empty":"No enrichments yet.","settings.enrichments.newName":"New enrichment","settings.keywords.title":"Keywords","settings.keywords.description":"Prompt for LLM-based keyword extraction.","settings.keywords.prompt":"Keyword prompt","settings.keywords.reset":"Reset to defaults","theme.system":"System","theme.light":"Light","theme.dark":"Dark","language.de":"Deutsch","language.en":"English","language.fr":"Français","language.it":"Italiano","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Other","enrichment.smart":"Smart Notes","enrichment.tasks":"Tasks","enrichment.meeting":"Meeting Notes","enrichment.email":"Email Draft","enrichment.prompt.smart":"Create smart notes with:\\n- Short summary\\n- Decisions\\n- Next steps","enrichment.prompt.tasks":"Extract all action items and tasks as a short bullet list. Keep each item concise.","enrichment.prompt.meeting":"Create well-structured meeting notes:\\n- Summary\\n- Key points\\n- Decisions\\n- Action items","enrichment.prompt.email":"Draft a concise professional email based on the transcript. Include a subject line.","keywords.defaultPrompt":"Extract 4-6 concise keywords or short key phrases from the transcript. Return only a JSON array of strings.","common.untitled":"Untitled","aria.sessionTitle":"Session title","aria.searchSessions":"Search sessions","aria.deleteNote":"Delete note","aria.toggleTheme":"Toggle theme","aria.pause":"Pause","aria.play":"Play","aria.seekAudio":"Seek audio","aria.startRecording":"Start recording","aria.stopRecording":"Stop recording","aria.resizeSidebar":"Resize sidebar","aria.close":"Close","errors.microphoneUnsupported":"Microphone access is not supported in this environment.","errors.microphoneDenied":"Microphone access was denied. Please allow access and try again.","errors.noAudioCaptured":"No audio captured. Please check microphone input.","errors.recordingError":"Recording error occurred.","errors.audioRetryUnavailable":"Audio file not available for retry.","errors.audioTooLarge":"Audio file is larger than 25MB. Please record a shorter clip.","errors.offlineMode":"Offline mode is enabled. Disable it to use cloud processing.","errors.localTranscription":"Local transcription is not configured.","errors.localLlm":"Local LLM is not configured.","errors.missingWhisperKey":"Missing Whisper API key in Settings.","errors.missingLlmKey":"Missing LLM API key in Settings.","errors.customWhisperEndpointRequired":"Custom Whisper endpoint is required.","errors.baseUrlRequired":"Base URL is required for non-OpenAI providers.","errors.noTranscript":"No transcript to enrich.","errors.audioBlobMissingDetails":"Audio blob not found. Try recording again or re-upload the file.","errors.transcriptionFailed":"Transcription failed.","errors.enrichmentFailed":"Enrichment failed.","file.defaultName":"voice-note","errorDetails.stage":"Stage","errorDetails.whisperProvider":"Whisper provider","errorDetails.llmProvider":"LLM provider","errorDetails.whisperEndpoint":"Whisper endpoint","errorDetails.llmBaseUrl":"LLM base URL","errorDetails.message":"Message","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Reset to defaults","settings.source.label":"Source","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Defaults"});}),
 "[project]/locales/fr.json (json)", ((__turbopack_context__) => {
 
-__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Thème","app.settings":"Paramètres","sidebar.title":"Vos notes","sidebar.new":"Nouveau","sidebar.search":"Rechercher","sidebar.empty":"Aucune session trouvée.","sidebar.previewEmpty":"Pas encore de contenu.","recorder.ready":"Prêt à enregistrer","recorder.recording":"Enregistrement...","recorder.pressHotkey":"Appuyez sur {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Téléverser l’audio","processing.title":"Traitement de la session","processing.subtitle":"Veuillez garder cette fenêtre ouverte.","processing.audioPreview":"Aperçu audio","steps.recording":"Enregistrement","steps.transcribing":"Transcription","steps.enriching":"Enrichissement","error.title":"Une erreur est survenue","error.fallback":"La session n’a pas pu être traitée. Vérifiez les paramètres du fournisseur et réessayez.","error.retry":"Réessayer","error.report":"Signaler","error.details":"Détails","tabs.enriched":"Enrichi","tabs.transcript":"Transcription","tabs.metadata":"Métadonnées","buttons.copy":"Copier","buttons.copyMarkdown":"Copier en Markdown","buttons.save":"Enregistrer...","buttons.openFolder":"Ouvrir le dossier","buttons.cancel":"Annuler","buttons.saveSettings":"Enregistrer","feedback.copied":"Copié dans le presse‑papiers.","feedback.copiedMarkdown":"Markdown copié.","feedback.copyFailed":"Échec de la copie.","feedback.saved":"Fichier enregistré.","feedback.saveFailed":"Échec de l’enregistrement.","feedback.openFolderFailed":"Ouverture du dossier non prise en charge ici.","metadata.created":"Créé","metadata.duration":"Durée","metadata.mode":"Mode","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Mots‑clés","metadata.audio":"Audio","metadata.noAudio":"Aucun audio enregistré","settings.title":"Paramètres","settings.description":"Configurez l’apparence, les fournisseurs et les modèles d’enrichissement.","settings.tabs.general":"Général","settings.tabs.api":"Clés API","settings.tabs.enrichments":"Enrichissements","settings.general.appearance":"Apparence","settings.general.theme":"Thème","settings.general.language":"Langue","settings.general.hotkey":"Raccourci","settings.general.hotkeyLabel":"Raccourci global","settings.api.whisperTitle":"Whisper (Transcription)","settings.api.provider":"Fournisseur","settings.api.apiKey":"Clé API","settings.api.endpoint":"Endpoint (optionnel)","settings.api.language":"Langue","settings.api.llmTitle":"LLM (Enrichissement)","settings.api.model":"Modèle","settings.api.baseUrl":"Base URL (optionnel)","settings.privacy.title":"Mode confidentialité","settings.privacy.offline":"Hors ligne (pas de réseau)","settings.privacy.storeAudio":"Stocker l’audio localement","settings.enrichments.title":"Modèles de prompt","settings.enrichments.description":"Gérez les modèles de sortie et les prompts pour l’enrichissement du transcript.","settings.enrichments.add":"Ajouter un enrichissement","settings.enrichments.name":"Nom","settings.enrichments.icon":"Icône","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Supprimer","settings.enrichments.empty":"Aucun enrichissement pour le moment.","settings.enrichments.newName":"Nouvel enrichissement","theme.system":"Système","theme.light":"Clair","theme.dark":"Sombre","language.de":"Allemand","language.en":"Anglais","language.fr":"Français","language.it":"Italien","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Autre","enrichment.smart":"Notes intelligentes","enrichment.tasks":"Tâches","enrichment.meeting":"Notes de réunion","enrichment.email":"Brouillon d’e‑mail","enrichment.prompt.smart":"Crée des notes intelligentes avec :\\n- Résumé court\\n- Décisions\\n- Prochaines étapes","enrichment.prompt.tasks":"Extrait toutes les actions et tâches sous forme de liste concise.","enrichment.prompt.meeting":"Crée des notes de réunion structurées :\\n- Résumé\\n- Points clés\\n- Décisions\\n- Actions","enrichment.prompt.email":"Rédige un e‑mail professionnel concis basé sur la transcription. Inclure un objet.","common.untitled":"Sans titre","aria.sessionTitle":"Titre de la session","aria.searchSessions":"Rechercher des sessions","aria.deleteNote":"Supprimer la note","aria.toggleTheme":"Basculer le thème","aria.pause":"Pause","aria.play":"Lire","aria.seekAudio":"Rechercher dans l’audio","aria.startRecording":"Démarrer l’enregistrement","aria.stopRecording":"Arrêter l’enregistrement","aria.resizeSidebar":"Redimensionner la barre latérale","aria.close":"Fermer","errors.microphoneUnsupported":"L’accès au micro n’est pas pris en charge dans cet environnement.","errors.microphoneDenied":"Accès au micro refusé. Autorisez l’accès et réessayez.","errors.noAudioCaptured":"Aucun audio capturé. Vérifiez le micro.","errors.recordingError":"Erreur lors de l’enregistrement.","errors.audioRetryUnavailable":"Fichier audio indisponible pour la relance.","errors.audioTooLarge":"Le fichier audio dépasse 25 Mo. Enregistrez un clip plus court.","errors.offlineMode":"Le mode hors ligne est activé. Désactivez‑le pour le traitement cloud.","errors.localTranscription":"La transcription locale n’est pas configurée.","errors.localLlm":"Le LLM local n’est pas configuré.","errors.missingWhisperKey":"Clé API Whisper manquante dans les paramètres.","errors.missingLlmKey":"Clé API LLM manquante dans les paramètres.","errors.customWhisperEndpointRequired":"Un endpoint Whisper personnalisé est requis.","errors.baseUrlRequired":"La Base URL est requise pour les fournisseurs non‑OpenAI.","errors.noTranscript":"Aucune transcription à enrichir.","errors.audioBlobMissingDetails":"Audio introuvable. Réenregistrez ou rechargez le fichier.","errors.transcriptionFailed":"Transcription échouée.","errors.enrichmentFailed":"Enrichissement échoué.","file.defaultName":"voice-note","errorDetails.stage":"Étape","errorDetails.whisperProvider":"Fournisseur Whisper","errorDetails.llmProvider":"Fournisseur LLM","errorDetails.whisperEndpoint":"Endpoint Whisper","errorDetails.llmBaseUrl":"Base URL LLM","errorDetails.message":"Message","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Réinitialiser par défaut","settings.source.label":"Source","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Par défaut"});}),
+__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Thème","app.settings":"Paramètres","sidebar.title":"Vos notes","sidebar.new":"Nouveau","sidebar.search":"Rechercher","sidebar.empty":"Aucune session trouvée.","sidebar.previewEmpty":"Pas encore de contenu.","recorder.ready":"Prêt à enregistrer","recorder.recording":"Enregistrement...","recorder.pressHotkey":"Appuyez sur {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Téléverser l’audio","processing.title":"Traitement de la session","processing.subtitle":"Veuillez garder cette fenêtre ouverte.","processing.audioPreview":"Aperçu audio","steps.recording":"Enregistrement","steps.transcribing":"Transcription","steps.enriching":"Enrichissement","error.title":"Une erreur est survenue","error.fallback":"La session n’a pas pu être traitée. Vérifiez les paramètres du fournisseur et réessayez.","error.retry":"Réessayer","error.report":"Signaler","error.details":"Détails","tabs.enriched":"Enrichi","tabs.transcript":"Transcription","tabs.metadata":"Métadonnées","buttons.copy":"Copier","buttons.copyMarkdown":"Copier en Markdown","buttons.save":"Enregistrer...","buttons.openFolder":"Ouvrir le dossier","buttons.cancel":"Annuler","buttons.saveSettings":"Enregistrer","feedback.copied":"Copié dans le presse‑papiers.","feedback.copiedMarkdown":"Markdown copié.","feedback.copyFailed":"Échec de la copie.","feedback.saved":"Fichier enregistré.","feedback.saveFailed":"Échec de l’enregistrement.","feedback.openFolderFailed":"Ouverture du dossier non prise en charge ici.","metadata.created":"Créé","metadata.duration":"Durée","metadata.mode":"Mode","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Mots‑clés","metadata.audio":"Audio","metadata.noAudio":"Aucun audio enregistré","settings.title":"Paramètres","settings.description":"Configurez l’apparence, les fournisseurs et les modèles d’enrichissement.","settings.tabs.general":"Général","settings.tabs.api":"Clés API","settings.tabs.enrichments":"Enrichissements","settings.general.appearance":"Apparence","settings.general.theme":"Thème","settings.general.language":"Langue","settings.general.hotkey":"Raccourci","settings.general.hotkeyLabel":"Raccourci global","settings.api.whisperTitle":"Whisper (Transcription)","settings.api.provider":"Fournisseur","settings.api.apiKey":"Clé API","settings.api.endpoint":"Endpoint (optionnel)","settings.api.language":"Langue","settings.api.llmTitle":"LLM (Enrichissement)","settings.api.model":"Modèle","settings.api.baseUrl":"Base URL (optionnel)","settings.privacy.title":"Mode confidentialité","settings.privacy.offline":"Hors ligne (pas de réseau)","settings.privacy.storeAudio":"Stocker l’audio localement","settings.enrichments.title":"Modèles de prompt","settings.enrichments.description":"Gérez les modèles de sortie et les prompts pour l’enrichissement du transcript.","settings.enrichments.add":"Ajouter un enrichissement","settings.enrichments.name":"Nom","settings.enrichments.icon":"Icône","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Supprimer","settings.enrichments.empty":"Aucun enrichissement pour le moment.","settings.enrichments.newName":"Nouvel enrichissement","settings.keywords.title":"Mots-clés","settings.keywords.description":"Prompt pour l’extraction de mots-clés par LLM.","settings.keywords.prompt":"Prompt de mots-clés","settings.keywords.reset":"Réinitialiser par défaut","theme.system":"Système","theme.light":"Clair","theme.dark":"Sombre","language.de":"Allemand","language.en":"Anglais","language.fr":"Français","language.it":"Italien","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Autre","enrichment.smart":"Notes intelligentes","enrichment.tasks":"Tâches","enrichment.meeting":"Notes de réunion","enrichment.email":"Brouillon d’e‑mail","enrichment.prompt.smart":"Crée des notes intelligentes avec :\\n- Résumé court\\n- Décisions\\n- Prochaines étapes","enrichment.prompt.tasks":"Extrait toutes les actions et tâches sous forme de liste concise.","enrichment.prompt.meeting":"Crée des notes de réunion structurées :\\n- Résumé\\n- Points clés\\n- Décisions\\n- Actions","enrichment.prompt.email":"Rédige un e‑mail professionnel concis basé sur la transcription. Inclure un objet.","keywords.defaultPrompt":"Extrait 4 à 6 mots-clés concis ou courtes expressions du transcript. Renvoyer uniquement un tableau JSON de chaînes.","common.untitled":"Sans titre","aria.sessionTitle":"Titre de la session","aria.searchSessions":"Rechercher des sessions","aria.deleteNote":"Supprimer la note","aria.toggleTheme":"Basculer le thème","aria.pause":"Pause","aria.play":"Lire","aria.seekAudio":"Rechercher dans l’audio","aria.startRecording":"Démarrer l’enregistrement","aria.stopRecording":"Arrêter l’enregistrement","aria.resizeSidebar":"Redimensionner la barre latérale","aria.close":"Fermer","errors.microphoneUnsupported":"L’accès au micro n’est pas pris en charge dans cet environnement.","errors.microphoneDenied":"Accès au micro refusé. Autorisez l’accès et réessayez.","errors.noAudioCaptured":"Aucun audio capturé. Vérifiez le micro.","errors.recordingError":"Erreur lors de l’enregistrement.","errors.audioRetryUnavailable":"Fichier audio indisponible pour la relance.","errors.audioTooLarge":"Le fichier audio dépasse 25 Mo. Enregistrez un clip plus court.","errors.offlineMode":"Le mode hors ligne est activé. Désactivez‑le pour le traitement cloud.","errors.localTranscription":"La transcription locale n’est pas configurée.","errors.localLlm":"Le LLM local n’est pas configuré.","errors.missingWhisperKey":"Clé API Whisper manquante dans les paramètres.","errors.missingLlmKey":"Clé API LLM manquante dans les paramètres.","errors.customWhisperEndpointRequired":"Un endpoint Whisper personnalisé est requis.","errors.baseUrlRequired":"La Base URL est requise pour les fournisseurs non‑OpenAI.","errors.noTranscript":"Aucune transcription à enrichir.","errors.audioBlobMissingDetails":"Audio introuvable. Réenregistrez ou rechargez le fichier.","errors.transcriptionFailed":"Transcription échouée.","errors.enrichmentFailed":"Enrichissement échoué.","file.defaultName":"voice-note","errorDetails.stage":"Étape","errorDetails.whisperProvider":"Fournisseur Whisper","errorDetails.llmProvider":"Fournisseur LLM","errorDetails.whisperEndpoint":"Endpoint Whisper","errorDetails.llmBaseUrl":"Base URL LLM","errorDetails.message":"Message","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Réinitialiser par défaut","settings.source.label":"Source","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Par défaut"});}),
 "[project]/locales/it.json (json)", ((__turbopack_context__) => {
 
-__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Tema","app.settings":"Impostazioni","sidebar.title":"Le tue note","sidebar.new":"Nuova","sidebar.search":"Cerca","sidebar.empty":"Nessuna sessione trovata.","sidebar.previewEmpty":"Nessun contenuto per ora.","recorder.ready":"Pronto a registrare","recorder.recording":"Registrazione...","recorder.pressHotkey":"Premi {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Carica audio","processing.title":"Elaborazione sessione","processing.subtitle":"Tieni questa finestra aperta.","processing.audioPreview":"Anteprima audio","steps.recording":"Registrazione","steps.transcribing":"Trascrizione","steps.enriching":"Arricchimento","error.title":"Qualcosa è andato storto","error.fallback":"La sessione non può essere elaborata. Controlla le impostazioni del provider e riprova.","error.retry":"Riprova","error.report":"Segnala","error.details":"Dettagli","tabs.enriched":"Arricchito","tabs.transcript":"Trascrizione","tabs.metadata":"Metadati","buttons.copy":"Copia","buttons.copyMarkdown":"Copia Markdown","buttons.save":"Salva...","buttons.openFolder":"Apri cartella","buttons.cancel":"Annulla","buttons.saveSettings":"Salva","feedback.copied":"Copiato negli appunti.","feedback.copiedMarkdown":"Markdown copiato.","feedback.copyFailed":"Copia non riuscita.","feedback.saved":"File salvato.","feedback.saveFailed":"Salvataggio non riuscito.","feedback.openFolderFailed":"Apertura cartella non supportata qui.","metadata.created":"Creato","metadata.duration":"Durata","metadata.mode":"Modalità","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Parole chiave","metadata.audio":"Audio","metadata.noAudio":"Nessun audio registrato","settings.title":"Impostazioni","settings.description":"Configura aspetto, provider e modelli di arricchimento.","settings.tabs.general":"Generale","settings.tabs.api":"API Keys","settings.tabs.enrichments":"Arricchimenti","settings.general.appearance":"Aspetto","settings.general.theme":"Tema","settings.general.language":"Lingua","settings.general.hotkey":"Scorciatoia","settings.general.hotkeyLabel":"Scorciatoia globale","settings.api.whisperTitle":"Whisper (Trascrizione)","settings.api.provider":"Provider","settings.api.apiKey":"API Key","settings.api.endpoint":"Endpoint (opzionale)","settings.api.language":"Lingua","settings.api.llmTitle":"LLM (Arricchimento)","settings.api.model":"Modello","settings.api.baseUrl":"Base URL (opzionale)","settings.privacy.title":"Modalità privacy","settings.privacy.offline":"Offline-first (nessuna rete)","settings.privacy.storeAudio":"Salva audio localmente","settings.enrichments.title":"Modelli di prompt","settings.enrichments.description":"Gestisci i template di output e i prompt per l’arricchimento del transcript.","settings.enrichments.add":"Aggiungi arricchimento","settings.enrichments.name":"Nome","settings.enrichments.icon":"Icona","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Elimina","settings.enrichments.empty":"Nessun arricchimento al momento.","settings.enrichments.newName":"Nuovo arricchimento","theme.system":"Sistema","theme.light":"Chiaro","theme.dark":"Scuro","language.de":"Tedesco","language.en":"Inglese","language.fr":"Francese","language.it":"Italiano","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Altro","enrichment.smart":"Smart Notes","enrichment.tasks":"Attività","enrichment.meeting":"Note riunione","enrichment.email":"Bozza email","enrichment.prompt.smart":"Crea note intelligenti con:\\n- Breve sintesi\\n- Decisioni\\n- Prossimi passi","enrichment.prompt.tasks":"Estrai tutte le attività e i to‑do come elenco conciso.","enrichment.prompt.meeting":"Crea note di riunione strutturate:\\n- Sintesi\\n- Punti chiave\\n- Decisioni\\n- Azioni","enrichment.prompt.email":"Redigi un’e‑mail professionale concisa basata sulla trascrizione. Includi un oggetto.","common.untitled":"Senza titolo","aria.sessionTitle":"Titolo sessione","aria.searchSessions":"Cerca sessioni","aria.deleteNote":"Elimina nota","aria.toggleTheme":"Cambia tema","aria.pause":"Pausa","aria.play":"Riproduci","aria.seekAudio":"Cerca audio","aria.startRecording":"Avvia registrazione","aria.stopRecording":"Ferma registrazione","aria.resizeSidebar":"Ridimensiona barra laterale","aria.close":"Chiudi","errors.microphoneUnsupported":"L’accesso al microfono non è supportato in questo ambiente.","errors.microphoneDenied":"Accesso al microfono negato. Consenti l’accesso e riprova.","errors.noAudioCaptured":"Nessun audio catturato. Verifica il microfono.","errors.recordingError":"Si è verificato un errore di registrazione.","errors.audioRetryUnavailable":"File audio non disponibile per il retry.","errors.audioTooLarge":"Il file audio supera i 25MB. Registra un clip più corto.","errors.offlineMode":"La modalità offline è attiva. Disattivala per la lavorazione cloud.","errors.localTranscription":"La trascrizione locale non è configurata.","errors.localLlm":"Il LLM locale non è configurato.","errors.missingWhisperKey":"Chiave API Whisper mancante nelle impostazioni.","errors.missingLlmKey":"Chiave API LLM mancante nelle impostazioni.","errors.customWhisperEndpointRequired":"È richiesto un endpoint Whisper personalizzato.","errors.baseUrlRequired":"Base URL richiesta per provider non‑OpenAI.","errors.noTranscript":"Nessuna trascrizione da arricchire.","errors.audioBlobMissingDetails":"Audio non trovato. Registra di nuovo o ricarica il file.","errors.transcriptionFailed":"Trascrizione non riuscita.","errors.enrichmentFailed":"Arricchimento non riuscito.","file.defaultName":"voice-note","errorDetails.stage":"Fase","errorDetails.whisperProvider":"Provider Whisper","errorDetails.llmProvider":"Provider LLM","errorDetails.whisperEndpoint":"Endpoint Whisper","errorDetails.llmBaseUrl":"Base URL LLM","errorDetails.message":"Messaggio","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Ripristina predefiniti","settings.source.label":"Origine","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Predefiniti"});}),
+__turbopack_context__.v({"app.title":"ai voice note","app.theme":"Tema","app.settings":"Impostazioni","sidebar.title":"Le tue note","sidebar.new":"Nuova","sidebar.search":"Cerca","sidebar.empty":"Nessuna sessione trovata.","sidebar.previewEmpty":"Nessun contenuto per ora.","recorder.ready":"Pronto a registrare","recorder.recording":"Registrazione...","recorder.pressHotkey":"Premi {hotkey}","recorder.live":"Live | {duration}","recorder.upload":"Carica audio","processing.title":"Elaborazione sessione","processing.subtitle":"Tieni questa finestra aperta.","processing.audioPreview":"Anteprima audio","steps.recording":"Registrazione","steps.transcribing":"Trascrizione","steps.enriching":"Arricchimento","error.title":"Qualcosa è andato storto","error.fallback":"La sessione non può essere elaborata. Controlla le impostazioni del provider e riprova.","error.retry":"Riprova","error.report":"Segnala","error.details":"Dettagli","tabs.enriched":"Arricchito","tabs.transcript":"Trascrizione","tabs.metadata":"Metadati","buttons.copy":"Copia","buttons.copyMarkdown":"Copia Markdown","buttons.save":"Salva...","buttons.openFolder":"Apri cartella","buttons.cancel":"Annulla","buttons.saveSettings":"Salva","feedback.copied":"Copiato negli appunti.","feedback.copiedMarkdown":"Markdown copiato.","feedback.copyFailed":"Copia non riuscita.","feedback.saved":"File salvato.","feedback.saveFailed":"Salvataggio non riuscito.","feedback.openFolderFailed":"Apertura cartella non supportata qui.","metadata.created":"Creato","metadata.duration":"Durata","metadata.mode":"Modalità","metadata.whisper":"Whisper","metadata.llm":"LLM","metadata.keywords":"Parole chiave","metadata.audio":"Audio","metadata.noAudio":"Nessun audio registrato","settings.title":"Impostazioni","settings.description":"Configura aspetto, provider e modelli di arricchimento.","settings.tabs.general":"Generale","settings.tabs.api":"API Keys","settings.tabs.enrichments":"Arricchimenti","settings.general.appearance":"Aspetto","settings.general.theme":"Tema","settings.general.language":"Lingua","settings.general.hotkey":"Scorciatoia","settings.general.hotkeyLabel":"Scorciatoia globale","settings.api.whisperTitle":"Whisper (Trascrizione)","settings.api.provider":"Provider","settings.api.apiKey":"API Key","settings.api.endpoint":"Endpoint (opzionale)","settings.api.language":"Lingua","settings.api.llmTitle":"LLM (Arricchimento)","settings.api.model":"Modello","settings.api.baseUrl":"Base URL (opzionale)","settings.privacy.title":"Modalità privacy","settings.privacy.offline":"Offline-first (nessuna rete)","settings.privacy.storeAudio":"Salva audio localmente","settings.enrichments.title":"Modelli di prompt","settings.enrichments.description":"Gestisci i template di output e i prompt per l’arricchimento del transcript.","settings.enrichments.add":"Aggiungi arricchimento","settings.enrichments.name":"Nome","settings.enrichments.icon":"Icona","settings.enrichments.prompt":"Prompt","settings.enrichments.delete":"Elimina","settings.enrichments.empty":"Nessun arricchimento al momento.","settings.enrichments.newName":"Nuovo arricchimento","settings.keywords.title":"Parole chiave","settings.keywords.description":"Prompt per l’estrazione di parole chiave tramite LLM.","settings.keywords.prompt":"Prompt parole chiave","settings.keywords.reset":"Ripristina predefiniti","theme.system":"Sistema","theme.light":"Chiaro","theme.dark":"Scuro","language.de":"Tedesco","language.en":"Inglese","language.fr":"Francese","language.it":"Italiano","language.auto":"Auto","provider.local":"Local","provider.openai":"OpenAI","provider.gemini":"Gemini","provider.claude":"Claude","provider.grok":"Grok","provider.whisperOpenAI":"OpenAI Whisper API","provider.whisperOther":"Altro","enrichment.smart":"Smart Notes","enrichment.tasks":"Attività","enrichment.meeting":"Note riunione","enrichment.email":"Bozza email","enrichment.prompt.smart":"Crea note intelligenti con:\\n- Breve sintesi\\n- Decisioni\\n- Prossimi passi","enrichment.prompt.tasks":"Estrai tutte le attività e i to‑do come elenco conciso.","enrichment.prompt.meeting":"Crea note di riunione strutturate:\\n- Sintesi\\n- Punti chiave\\n- Decisioni\\n- Azioni","enrichment.prompt.email":"Redigi un’e‑mail professionale concisa basata sulla trascrizione. Includi un oggetto.","keywords.defaultPrompt":"Estrai 4-6 parole chiave concise o brevi frasi dal transcript. Restituisci solo un array JSON di stringhe.","common.untitled":"Senza titolo","aria.sessionTitle":"Titolo sessione","aria.searchSessions":"Cerca sessioni","aria.deleteNote":"Elimina nota","aria.toggleTheme":"Cambia tema","aria.pause":"Pausa","aria.play":"Riproduci","aria.seekAudio":"Cerca audio","aria.startRecording":"Avvia registrazione","aria.stopRecording":"Ferma registrazione","aria.resizeSidebar":"Ridimensiona barra laterale","aria.close":"Chiudi","errors.microphoneUnsupported":"L’accesso al microfono non è supportato in questo ambiente.","errors.microphoneDenied":"Accesso al microfono negato. Consenti l’accesso e riprova.","errors.noAudioCaptured":"Nessun audio catturato. Verifica il microfono.","errors.recordingError":"Si è verificato un errore di registrazione.","errors.audioRetryUnavailable":"File audio non disponibile per il retry.","errors.audioTooLarge":"Il file audio supera i 25MB. Registra un clip più corto.","errors.offlineMode":"La modalità offline è attiva. Disattivala per la lavorazione cloud.","errors.localTranscription":"La trascrizione locale non è configurata.","errors.localLlm":"Il LLM locale non è configurato.","errors.missingWhisperKey":"Chiave API Whisper mancante nelle impostazioni.","errors.missingLlmKey":"Chiave API LLM mancante nelle impostazioni.","errors.customWhisperEndpointRequired":"È richiesto un endpoint Whisper personalizzato.","errors.baseUrlRequired":"Base URL richiesta per provider non‑OpenAI.","errors.noTranscript":"Nessuna trascrizione da arricchire.","errors.audioBlobMissingDetails":"Audio non trovato. Registra di nuovo o ricarica il file.","errors.transcriptionFailed":"Trascrizione non riuscita.","errors.enrichmentFailed":"Arricchimento non riuscito.","file.defaultName":"voice-note","errorDetails.stage":"Fase","errorDetails.whisperProvider":"Provider Whisper","errorDetails.llmProvider":"Provider LLM","errorDetails.whisperEndpoint":"Endpoint Whisper","errorDetails.llmBaseUrl":"Base URL LLM","errorDetails.message":"Messaggio","placeholder.apiKey":"sk-...","placeholder.endpoint":"https://api.example.com","placeholder.baseUrl":"https://api.example.com","settings.enrichments.reset":"Ripristina predefiniti","settings.source.label":"Origine","settings.source.tauri":"Tauri","settings.source.local":"LocalStorage","settings.source.default":"Predefiniti"});}),
 "[project]/lib/i18n.ts [app-client] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
@@ -93,6 +93,8 @@ __turbopack_context__.s([
     ()=>generateMockContent,
     "getDefaultEnrichments",
     ()=>getDefaultEnrichments,
+    "getDefaultKeywordsPrompt",
+    ()=>getDefaultKeywordsPrompt,
     "seedSessions",
     ()=>seedSessions
 ]);
@@ -132,6 +134,10 @@ function getDefaultEnrichments(locale = "de") {
             prompt: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$i18n$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["t"])(messages, "enrichment.prompt.email")
         }
     ];
+}
+function getDefaultKeywordsPrompt(locale = "de") {
+    const messages = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$i18n$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getMessages"])(locale);
+    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$i18n$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["t"])(messages, "keywords.defaultPrompt");
 }
 const baseTranscript = "Heute haben wir die wichtigsten Punkte zum Projektstatus besprochen. Offene Fragen betreffen die Timeline, das Budget und die Abhaengigkeiten im Design. Naechste Schritte sind eine Review-Runde am Mittwoch und das Sammeln der Kundenfeedbacks.";
 const enrichedByMode = {
@@ -415,6 +421,8 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$i18n$2e$ts__$5b$app$2
 const OPENAI_BASE_URL = "https://api.openai.com";
 const OPENAI_WHISPER_MODEL = "whisper-1";
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+const KEYWORD_LIMIT = 6;
+const DEFAULT_KEYWORD_PROMPT = "Extract 4-6 concise keywords or short key phrases from the transcript. Avoid filler words.";
 const STOPWORDS = new Set([
     "und",
     "oder",
@@ -545,6 +553,37 @@ function getModePrompt(mode) {
             ].join("\n");
     }
 }
+function normalizeKeywords(list, limit = KEYWORD_LIMIT) {
+    const seen = new Set();
+    const result = [];
+    for (const raw of list){
+        const cleaned = raw.replace(/^[\s\-*•]+/g, "").replace(/^[\"'“”‘’]+|[\"'“”‘’]+$/g, "").trim();
+        if (!cleaned) continue;
+        const key = cleaned.toLowerCase();
+        if (seen.has(key)) continue;
+        if (!cleaned.includes(" ") && STOPWORDS.has(key)) continue;
+        seen.add(key);
+        result.push(cleaned);
+        if (result.length >= limit) break;
+    }
+    return result;
+}
+function parseKeywords(text, limit = KEYWORD_LIMIT) {
+    const trimmed = text.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith("[")) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return normalizeKeywords(parsed.map((item)=>String(item)), limit);
+            }
+        } catch  {
+        // fall through to heuristic parsing
+        }
+    }
+    const candidates = trimmed.split(/[\n,;]+/).map((value)=>value.trim()).filter(Boolean);
+    return normalizeKeywords(candidates, limit);
+}
 function extractKeywords(text, limit = 4) {
     const tokens = text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((token)=>token.length > 2 && !STOPWORDS.has(token));
     const counts = new Map();
@@ -597,6 +636,44 @@ async function transcribeAudio(blob, settings) {
     if (!text.trim()) throw new Error("Transcription returned no text.");
     return text.trim();
 }
+async function generateKeywords(transcript, prompt, settings) {
+    const messages = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$i18n$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getMessages"])(settings.general.language);
+    const fallbackPrompt = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$i18n$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["t"])(messages, "keywords.defaultPrompt");
+    const endpoint = resolveEndpoint(settings.api.llm.baseUrl, "/v1/responses");
+    const systemPrompt = (prompt?.trim() || fallbackPrompt || DEFAULT_KEYWORD_PROMPT) + "\n\nReturn only a JSON array of strings. Respond in the same language as the transcript.";
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${settings.api.llm.apiKey}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: settings.api.llm.model || "gpt-4o-mini",
+            input: [
+                {
+                    role: "system",
+                    content: systemPrompt
+                },
+                {
+                    role: "user",
+                    content: transcript
+                }
+            ],
+            temperature: 0.2,
+            max_output_tokens: 200
+        })
+    });
+    if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
+    }
+    const payload = await response.json();
+    const raw = extractResponseText(payload);
+    const keywords = parseKeywords(raw, KEYWORD_LIMIT);
+    if (!keywords.length) {
+        throw new Error("Keyword extraction returned no keywords.");
+    }
+    return keywords;
+}
 async function enrichTranscript(transcript, prompt, settings) {
     const messages = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$i18n$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getMessages"])(settings.general.language);
     if (!transcript.trim()) {
@@ -648,7 +725,13 @@ async function enrichTranscript(transcript, prompt, settings) {
     }
     return {
         enriched,
-        keywords: extractKeywords(enriched)
+        keywords: await (async ()=>{
+            try {
+                return await generateKeywords(transcript, settings.keywordsPrompt, settings);
+            } catch  {
+                return extractKeywords(transcript, KEYWORD_LIMIT);
+            }
+        })()
     };
 }
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
@@ -702,7 +785,8 @@ const defaultSettings = {
         offline: false,
         storeAudio: true
     },
-    enrichments: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$mock$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getDefaultEnrichments"])("de")
+    enrichments: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$mock$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getDefaultEnrichments"])("de"),
+    keywordsPrompt: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$mock$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getDefaultKeywordsPrompt"])("de")
 };
 const SETTINGS_KEY = "vi-settings";
 const SESSIONS_KEY = "vi-sessions";
@@ -711,6 +795,268 @@ const SESSIONS_FILE = "ai-voice-note-sessions.json";
 const LEGACY_SETTINGS_FILE = "voice-intelligence-settings.json";
 const LEGACY_SESSIONS_FILE = "voice-intelligence-sessions.json";
 const isTauri = ()=>("TURBOPACK compile-time value", "object") !== "undefined" && ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+const AUDIO_DIR = "audio";
+const AUDIO_EXTENSION_BY_MIME = {
+    "audio/webm": "webm",
+    "audio/ogg": "ogg",
+    "audio/mp4": "m4a",
+    "audio/mpeg": "mp3",
+    "audio/wav": "wav"
+};
+const AUDIO_MIME_BY_EXTENSION = {
+    webm: "audio/webm",
+    ogg: "audio/ogg",
+    mp4: "audio/mp4",
+    m4a: "audio/mp4",
+    mp3: "audio/mpeg",
+    wav: "audio/wav"
+};
+const BASE64_SUFFIX = ".b64";
+const BASE64_CHUNK_SIZE = 0x8000;
+function resolveAudioExtension(mime) {
+    const normalized = (mime || "").toLowerCase();
+    if (AUDIO_EXTENSION_BY_MIME[normalized]) return AUDIO_EXTENSION_BY_MIME[normalized];
+    if (normalized.startsWith("audio/")) {
+        const suffix = normalized.replace("audio/", "");
+        if (suffix) return suffix;
+    }
+    return "webm";
+}
+function resolveAudioMime(path, fallback) {
+    const parts = path.split(".");
+    const ext = parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+    return AUDIO_MIME_BY_EXTENSION[ext] ?? fallback ?? "audio/webm";
+}
+function encodeBase64(bytes) {
+    let binary = "";
+    for(let i = 0; i < bytes.length; i += BASE64_CHUNK_SIZE){
+        const chunk = bytes.slice(i, i + BASE64_CHUNK_SIZE);
+        binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
+}
+function decodeBase64(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for(let i = 0; i < binary.length; i += 1){
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+}
+async function ensureAudioDir(dir) {
+    if (!isTauri()) return;
+    try {
+        const { mkdir, BaseDirectory } = await __turbopack_context__.A("[project]/node_modules/.pnpm/@tauri-apps+plugin-fs@2.4.5/node_modules/@tauri-apps/plugin-fs/dist-js/index.js [app-client] (ecmascript, async loader)");
+        const base = dir === "AppConfig" ? BaseDirectory.AppConfig : BaseDirectory.AppData;
+        await mkdir(AUDIO_DIR, {
+            dir: base,
+            recursive: true
+        });
+    } catch  {
+    // ignore
+    }
+}
+async function writeBinaryAudio(filename, buffer, dir) {
+    const { writeFile, BaseDirectory } = await __turbopack_context__.A("[project]/node_modules/.pnpm/@tauri-apps+plugin-fs@2.4.5/node_modules/@tauri-apps/plugin-fs/dist-js/index.js [app-client] (ecmascript, async loader)");
+    await ensureAudioDir(dir);
+    const base = dir === "AppConfig" ? BaseDirectory.AppConfig : BaseDirectory.AppData;
+    await writeFile({
+        path: filename,
+        contents: buffer
+    }, {
+        dir: base
+    });
+}
+async function writeBase64Audio(filename, buffer) {
+    const { writeTextFile, BaseDirectory } = await __turbopack_context__.A("[project]/node_modules/.pnpm/@tauri-apps+plugin-fs@2.4.5/node_modules/@tauri-apps/plugin-fs/dist-js/index.js [app-client] (ecmascript, async loader)");
+    await ensureAudioDir("AppConfig");
+    const base64 = encodeBase64(buffer);
+    await writeTextFile(filename + BASE64_SUFFIX, base64, {
+        dir: BaseDirectory.AppConfig
+    });
+    return filename + BASE64_SUFFIX;
+}
+async function persistAudioBlob(sessionId, blob) {
+    if (!isTauri()) return null;
+    try {
+        let extension = resolveAudioExtension(blob.type);
+        if (!blob.type && "name" in blob && typeof blob.name === "string") {
+            const nameParts = blob.name.split(".");
+            const nameExt = nameParts.length > 1 ? nameParts[nameParts.length - 1].toLowerCase() : "";
+            if (nameExt) extension = nameExt;
+        }
+        const filename = `${AUDIO_DIR}/${sessionId}.${extension}`;
+        const buffer = new Uint8Array(await blob.arrayBuffer());
+        const mime = blob.type || AUDIO_MIME_BY_EXTENSION[extension] || "audio/webm";
+        let lastError;
+        for (const dir of [
+            "AppData",
+            "AppConfig"
+        ]){
+            try {
+                await writeBinaryAudio(filename, buffer, dir);
+                try {
+                    const { readFile, BaseDirectory } = await __turbopack_context__.A("[project]/node_modules/.pnpm/@tauri-apps+plugin-fs@2.4.5/node_modules/@tauri-apps/plugin-fs/dist-js/index.js [app-client] (ecmascript, async loader)");
+                    const base = dir === "AppConfig" ? BaseDirectory.AppConfig : BaseDirectory.AppData;
+                    await readFile(filename, {
+                        dir: base
+                    });
+                    return {
+                        path: filename,
+                        mime
+                    };
+                } catch  {
+                    const base64Path = await writeBase64Audio(filename, buffer);
+                    return {
+                        path: base64Path,
+                        mime
+                    };
+                }
+            } catch (error) {
+                lastError = error;
+            }
+        }
+        try {
+            const base64Path = await writeBase64Audio(filename, buffer);
+            return {
+                path: base64Path,
+                mime
+            };
+        } catch (error) {
+            lastError = error;
+        }
+        void lastError;
+        return null;
+    } catch  {
+        return null;
+    }
+}
+async function readAudioBlob(path, mime) {
+    if (!isTauri()) return null;
+    try {
+        const { readFile, readTextFile, BaseDirectory } = await __turbopack_context__.A("[project]/node_modules/.pnpm/@tauri-apps+plugin-fs@2.4.5/node_modules/@tauri-apps/plugin-fs/dist-js/index.js [app-client] (ecmascript, async loader)");
+        if (path.endsWith(BASE64_SUFFIX)) {
+            const base64 = await readTextFile(path, {
+                dir: BaseDirectory.AppConfig
+            });
+            const bytes = decodeBase64(base64);
+            return new Blob([
+                bytes
+            ], {
+                type: resolveAudioMime(path.replace(BASE64_SUFFIX, ""), mime)
+            });
+        }
+        try {
+            const data = await readFile(path, {
+                dir: BaseDirectory.AppData
+            });
+            return new Blob([
+                data
+            ], {
+                type: resolveAudioMime(path, mime)
+            });
+        } catch  {
+            try {
+                const data = await readFile(path, {
+                    dir: BaseDirectory.AppConfig
+                });
+                return new Blob([
+                    data
+                ], {
+                    type: resolveAudioMime(path, mime)
+                });
+            } catch  {
+                const base64 = await readTextFile(path + BASE64_SUFFIX, {
+                    dir: BaseDirectory.AppConfig
+                });
+                const bytes = decodeBase64(base64);
+                return new Blob([
+                    bytes
+                ], {
+                    type: resolveAudioMime(path, mime)
+                });
+            }
+        }
+    } catch  {
+        return null;
+    }
+}
+async function removeAudioFile(path) {
+    if (!isTauri()) return;
+    try {
+        const { remove, BaseDirectory } = await __turbopack_context__.A("[project]/node_modules/.pnpm/@tauri-apps+plugin-fs@2.4.5/node_modules/@tauri-apps/plugin-fs/dist-js/index.js [app-client] (ecmascript, async loader)");
+        const paths = path.endsWith(BASE64_SUFFIX) ? [
+            path,
+            path.replace(BASE64_SUFFIX, "")
+        ] : [
+            path,
+            path + BASE64_SUFFIX
+        ];
+        for (const target of paths){
+            try {
+                await remove(target, {
+                    dir: BaseDirectory.AppData
+                });
+            } catch  {
+                try {
+                    await remove(target, {
+                        dir: BaseDirectory.AppConfig
+                    });
+                } catch  {
+                // ignore
+                }
+            }
+        }
+    } catch  {
+    // ignore
+    }
+}
+async function getAudioDuration(blob) {
+    if (typeof Audio === "undefined") return 0;
+    return new Promise((resolve)=>{
+        const audio = new Audio();
+        const url = URL.createObjectURL(blob);
+        let settled = false;
+        let timeoutId = 0;
+        const cleanup = ()=>{
+            window.clearTimeout(timeoutId);
+            audio.removeEventListener("loadedmetadata", handleLoaded);
+            audio.removeEventListener("timeupdate", handleTimeUpdate);
+            audio.removeEventListener("error", handleError);
+            URL.revokeObjectURL(url);
+        };
+        const finish = (value)=>{
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve(value);
+        };
+        timeoutId = window.setTimeout(()=>finish(0), 4000);
+        const handleTimeUpdate = ()=>{
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                finish(audio.duration);
+            }
+        };
+        const handleLoaded = ()=>{
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                finish(audio.duration);
+                return;
+            }
+            audio.addEventListener("timeupdate", handleTimeUpdate);
+            audio.currentTime = 1e101;
+        };
+        const handleError = ()=>finish(0);
+        audio.addEventListener("loadedmetadata", handleLoaded);
+        audio.addEventListener("error", handleError);
+        audio.preload = "metadata";
+        audio.src = url;
+    });
+}
+async function resolveAudioDurationSec(blob, fallback = 0) {
+    const duration = await getAudioDuration(blob);
+    const rounded = Number.isFinite(duration) ? Math.round(duration) : 0;
+    return Math.max(fallback, rounded);
+}
 async function readFromTauri(filename) {
     if (!isTauri()) return null;
     try {
@@ -752,6 +1098,7 @@ function normalizeSettings(input) {
     const legacy = input ?? {};
     const general = legacy.general ?? {};
     const api = legacy.api ?? {};
+    const keywordsPrompt = legacy.keywordsPrompt ?? legacy.keywords?.prompt ?? defaultSettings.keywordsPrompt;
     return {
         general: {
             language: general.language ?? legacy.language ?? defaultSettings.general.language,
@@ -776,7 +1123,8 @@ function normalizeSettings(input) {
             offline: legacy.privacy?.offline ?? defaultSettings.privacy.offline,
             storeAudio: legacy.privacy?.storeAudio ?? defaultSettings.privacy.storeAudio
         },
-        enrichments: Array.isArray(legacy.enrichments) && legacy.enrichments.length ? legacy.enrichments : defaultSettings.enrichments
+        enrichments: Array.isArray(legacy.enrichments) && legacy.enrichments.length ? legacy.enrichments : defaultSettings.enrichments,
+        keywordsPrompt
     };
 }
 function localizeError(message, locale) {
@@ -883,6 +1231,50 @@ function AppStoreProvider({ children }) {
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$1$2e$6_$40$babel$2b$core$40$7$2e$28$2e$6_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "AppStoreProvider.useEffect": ()=>{
+            if (!activeSessionId) return;
+            const session = getSessionById(activeSessionId);
+            if (!session?.audioPath || session.audioUrl) return;
+            let active = true;
+            void ({
+                "AppStoreProvider.useEffect": async ()=>{
+                    const blob = await readAudioBlob(session.audioPath, session.audioMime);
+                    if (!active) return;
+                    if (!blob) {
+                        updateSession(session.id, {
+                            audioPath: undefined,
+                            audioMime: undefined
+                        });
+                        return;
+                    }
+                    setAudioBlob(session.id, blob);
+                    const url = URL.createObjectURL(blob);
+                    const updates = {
+                        audioUrl: url,
+                        audioMime: session.audioMime ?? blob.type
+                    };
+                    if (session.metadata.durationSec <= 0) {
+                        const durationSec = await resolveAudioDurationSec(blob, 0);
+                        if (durationSec > 0) {
+                            updates.metadata = {
+                                ...session.metadata,
+                                durationSec
+                            };
+                        }
+                    }
+                    updateSession(session.id, updates);
+                }
+            })["AppStoreProvider.useEffect"]();
+            return ({
+                "AppStoreProvider.useEffect": ()=>{
+                    active = false;
+                }
+            })["AppStoreProvider.useEffect"];
+        }
+    }["AppStoreProvider.useEffect"], [
+        activeSessionId
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$1$2e$6_$40$babel$2b$core$40$7$2e$28$2e$6_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "AppStoreProvider.useEffect": ()=>{
             if (!settings.enrichments.length) return;
             if (!settings.enrichments.some({
                 "AppStoreProvider.useEffect": (item)=>item.id === mode
@@ -953,10 +1345,20 @@ function AppStoreProvider({ children }) {
     const updateSession = (id, updates)=>{
         hasUserModifiedSessions.current = true;
         setSessions((prev)=>{
-            const next = prev.map((session)=>session.id === id ? {
+            const next = prev.map((session)=>{
+                if (session.id !== id) return session;
+                if ("audioUrl" in updates && session.audioUrl && session.audioUrl !== updates.audioUrl) {
+                    try {
+                        URL.revokeObjectURL(session.audioUrl);
+                    } catch  {
+                    // ignore
+                    }
+                }
+                return {
                     ...session,
                     ...updates
-                } : session);
+                };
+            });
             const serializable = next.map(({ audioUrl, ...rest })=>rest);
             try {
                 if ("TURBOPACK compile-time truthy", 1) {
@@ -1053,7 +1455,7 @@ function AppStoreProvider({ children }) {
                 metadata: {
                     ...baseMetadata,
                     durationSec,
-                    keywords: keywords.length ? keywords : (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$processing$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["extractKeywords"])(transcript),
+                    keywords: keywords.length ? keywords : (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$processing$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["extractKeywords"])(transcript, 6),
                     whisperProvider: settingsSnapshot.api.whisper.provider,
                     llmProvider: settingsSnapshot.api.llm.provider
                 }
@@ -1099,6 +1501,9 @@ function AppStoreProvider({ children }) {
                 } catch  {
                 // ignore
                 }
+            }
+            if (existing?.audioPath) {
+                void removeAudioFile(existing.audioPath);
             }
             clearAudioBlob(id);
             setSessions((prev)=>{
@@ -1161,21 +1566,28 @@ function AppStoreProvider({ children }) {
                     }
                     setAudioBlob(targetId, blob);
                     if (settingsRef.current.privacy.storeAudio) {
+                        const persisted = await persistAudioBlob(targetId, blob);
                         const url = URL.createObjectURL(blob);
                         updateSession(targetId, {
                             audioUrl: url,
+                            audioPath: persisted?.path,
+                            audioMime: persisted?.mime ?? blob.type,
                             errorMessage: undefined,
                             errorDetails: undefined
                         });
                     } else {
                         updateSession(targetId, {
+                            audioUrl: undefined,
+                            audioPath: undefined,
+                            audioMime: undefined,
                             errorMessage: undefined,
                             errorDetails: undefined
                         });
                     }
                     const currentSession = getSessionById(targetId);
                     const elapsed = currentSession?.recordingStartedAt ? Math.max(0, Math.floor((Date.now() - currentSession.recordingStartedAt) / 1000)) : 0;
-                    await processAudio(targetId, blob, elapsed);
+                    const durationSec = await resolveAudioDurationSec(blob, elapsed);
+                    await processAudio(targetId, blob, durationSec);
                     cleanupRecorder();
                 });
                 recorder.setOnError((error)=>{
@@ -1224,7 +1636,7 @@ function AppStoreProvider({ children }) {
             }
             setRecordingLevel(0);
         },
-        uploadAudio: (file)=>{
+        uploadAudio: async (file)=>{
             if (!file) return;
             const session = createSession({
                 status: "processing",
@@ -1233,17 +1645,34 @@ function AppStoreProvider({ children }) {
             });
             setAudioBlob(session.id, file);
             if (settingsRef.current.privacy.storeAudio) {
+                const persisted = await persistAudioBlob(session.id, file);
                 const url = URL.createObjectURL(file);
                 updateSession(session.id, {
-                    audioUrl: url
+                    audioUrl: url,
+                    audioPath: persisted?.path,
+                    audioMime: persisted?.mime ?? file.type
                 });
             }
-            void processAudio(session.id, file, 0);
+            const durationSec = await resolveAudioDurationSec(file, 0);
+            void processAudio(session.id, file, durationSec);
         },
-        retryProcessing: ()=>{
+        retryProcessing: async ()=>{
             const active = getActiveSession();
             if (!active) return;
-            const blob = audioBlobsRef.current[active.id];
+            let blob = audioBlobsRef.current[active.id];
+            if (!blob && active.audioPath) {
+                blob = await readAudioBlob(active.audioPath, active.audioMime) ?? undefined;
+                if (blob) {
+                    setAudioBlob(active.id, blob);
+                    if (!active.audioUrl) {
+                        const url = URL.createObjectURL(blob);
+                        updateSession(active.id, {
+                            audioUrl: url,
+                            audioMime: active.audioMime ?? blob.type
+                        });
+                    }
+                }
+            }
             if (!blob) {
                 const locale = settingsRef.current.general.language;
                 updateSession(active.id, {
@@ -1254,7 +1683,8 @@ function AppStoreProvider({ children }) {
                 });
                 return;
             }
-            void processAudio(active.id, blob, active.metadata.durationSec);
+            const durationSec = active.metadata.durationSec || await resolveAudioDurationSec(blob, 0);
+            void processAudio(active.id, blob, durationSec);
         },
         updateSessionTitle: (id, title)=>updateSession(id, {
                 title: title.trim() ? title : ""
@@ -1311,11 +1741,11 @@ function AppStoreProvider({ children }) {
         children: children
     }, void 0, false, {
         fileName: "[project]/lib/store.tsx",
-        lineNumber: 771,
+        lineNumber: 1075,
         columnNumber: 10
     }, this);
 }
-_s(AppStoreProvider, "vnH97mq1FaClI5F7Ebp8mtV7SO0=");
+_s(AppStoreProvider, "7obE8zxTIlNyUBZYWHuWxkYw0Qo=");
 _c = AppStoreProvider;
 function useAppStore() {
     _s1();

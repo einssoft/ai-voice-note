@@ -15,7 +15,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 export function AppShell() {
   const {
     state: { settings, sessions, activeSessionId },
-    actions: { toggleTheme, startRecording, stopRecording },
+    actions: { toggleTheme, startRecording, stopRecording, cancelProcessing },
   } = useAppStore();
 
   const SIDEBAR_MIN = 240;
@@ -39,6 +39,7 @@ export function AppShell() {
   const { t } = useI18n(settings.general.language);
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? null;
   const isRecording = activeSession?.status === "recording";
+  const isProcessing = sessions.some((session) => session.status === "processing");
 
   const updateSidebarWidth = useCallback(
     (value: number) => {
@@ -134,6 +135,7 @@ export function AppShell() {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (isEditableTarget(event.target)) return;
+      if (isProcessing) return;
       if (!matchesHotkey(event, settings.general.hotkey)) return;
       event.preventDefault();
       if (isRecording) {
@@ -145,11 +147,48 @@ export function AppShell() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isRecording, settings.general.hotkey, startRecording, stopRecording]);
+  }, [isProcessing, isRecording, settings.general.hotkey, startRecording, stopRecording]);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!isProcessing) return;
+      if (isEditableTarget(event.target)) return;
+      if (!matchesHotkey(event, settings.general.cancelHotkey)) return;
+      event.preventDefault();
+      cancelProcessing();
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [cancelProcessing, isProcessing, settings.general.cancelHotkey]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (!isProcessing) return;
+    const prev = document.body.style.cursor;
+    document.body.style.cursor = "wait";
+    return () => {
+      document.body.style.cursor = prev;
+    };
+  }, [isProcessing]);
+
+  useEffect(() => {
+    if (!isProcessing || typeof document === "undefined") return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) {
+      active.blur();
+    }
+  }, [isProcessing]);
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen flex-col bg-background text-foreground">
+      <div className="relative h-screen bg-background text-foreground">
+        <div
+          className={cn(
+            "flex h-screen flex-col",
+            isProcessing && "pointer-events-none select-none"
+          )}
+        >
         <header className="flex h-14 items-center justify-between border-b border-border px-6">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -164,6 +203,7 @@ export function AppShell() {
                   variant="ghost"
                   size="icon"
                   onClick={toggleTheme}
+                  disabled={isProcessing}
                   aria-label={t("aria.toggleTheme")}
                 >
                   {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -172,7 +212,12 @@ export function AppShell() {
               <TooltipContent>{t("app.theme")}</TooltipContent>
             </Tooltip>
             <SettingsDialog>
-              <Button variant="ghost" size="icon" aria-label={t("app.settings")}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("app.settings")}
+                disabled={isProcessing}
+              >
                 <Settings className="h-4 w-4" />
               </Button>
             </SettingsDialog>
@@ -207,6 +252,20 @@ export function AppShell() {
             <SessionView />
           </main>
         </div>
+      </div>
+        {isProcessing && (
+          <div className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/40 border-t-primary" />
+              <div>
+                <div className="text-sm font-semibold">{t("processing.overlayTitle")}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t("processing.overlayHint", { hotkey: settings.general.cancelHotkey })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );

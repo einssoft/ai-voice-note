@@ -126,11 +126,11 @@ export class AudioRecorder {
 
   private getSupportedMimeType(): string | null {
     const mimeTypes = [
+      "audio/mp4",
+      "audio/mpeg",
       "audio/webm;codecs=opus",
       "audio/webm",
       "audio/ogg;codecs=opus",
-      "audio/mp4",
-      "audio/mpeg",
     ];
     for (const mimeType of mimeTypes) {
       if (MediaRecorder.isTypeSupported(mimeType)) return mimeType;

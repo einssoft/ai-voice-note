@@ -20,7 +20,7 @@ type RecorderPanelProps = {
   onModeChange: (mode: Mode) => void;
   onStart: () => void | Promise<void>;
   onStop: () => void;
-  onUpload: (file: File) => void;
+  onUpload: (file: File) => void | Promise<void>;
 };
 
 export function RecorderPanel({

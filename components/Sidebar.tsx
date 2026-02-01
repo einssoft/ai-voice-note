@@ -3,13 +3,13 @@
 import { Plus, Search, Trash2 } from "lucide-react";
 
 import { useAppStore } from "@/lib/store";
-import { formatDateTime } from "@/lib/utils";
 import { useI18n, toIntlLocale } from "@/lib/i18n";
 import { getIconById } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { DateTimeText } from "@/components/DateTimeText";
 
 export function Sidebar() {
   const {
@@ -19,6 +19,7 @@ export function Sidebar() {
   const { t } = useI18n(settings.general.language);
   const locale = toIntlLocale(settings.general.language);
   const templates = settings.enrichments;
+  const isProcessing = sessions.some((session) => session.status === "processing");
 
   const filtered = sessions.filter((session) => {
     const query = searchQuery.trim().toLowerCase();
@@ -34,7 +35,7 @@ export function Sidebar() {
     <aside className="flex h-full min-w-0 flex-col bg-card">
       <div className="flex items-center justify-between px-5 pt-5">
         <div className="text-sm font-semibold">{t("sidebar.title")}</div>
-        <Button variant="ghost" size="sm" onClick={createEmptySession}>
+        <Button variant="ghost" size="sm" onClick={createEmptySession} disabled={isProcessing}>
           <Plus className="h-4 w-4" />
           {t("sidebar.new")}
         </Button>
@@ -48,6 +49,7 @@ export function Sidebar() {
             aria-label={t("aria.searchSessions")}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
+            disabled={isProcessing}
           />
         </div>
       </div>
@@ -98,13 +100,14 @@ export function Sidebar() {
                         deleteSession(session.id);
                       }}
                       aria-label={t("aria.deleteNote")}
+                      disabled={isProcessing}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {formatDateTime(session.createdAt, locale)}
+                  <DateTimeText value={session.createdAt} locale={locale} />
                 </div>
                 <div className="mt-2 truncate text-xs text-muted-foreground">{preview}</div>
               </div>

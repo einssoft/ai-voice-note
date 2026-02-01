@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecorderPanel } from "@/components/RecorderPanel";
 import { AudioPreview } from "@/components/AudioPreview";
+import { DateTimeText } from "@/components/DateTimeText";
 
 function Stepper({
   status,
@@ -219,9 +220,15 @@ export function SessionView() {
         </div>
         {activeSession.audioUrl && (
           <div className="rounded-2xl border border-border bg-card p-4 text-sm shadow-soft">
-            <div className="text-xs font-medium text-muted-foreground">{t("processing.audioPreview")}</div>
+            <div className="text-xs font-medium text-muted-foreground">
+              {t("processing.audioPreview")}
+            </div>
             <div className="mt-2">
-              <AudioPreview src={activeSession.audioUrl} />
+              <AudioPreview
+                src={activeSession.audioUrl}
+                mime={activeSession.audioMime}
+                fallbackDurationSec={activeSession.metadata.durationSec}
+              />
             </div>
           </div>
         )}
@@ -271,7 +278,7 @@ export function SessionView() {
             aria-label={t("aria.sessionTitle")}
           />
           <div className="mt-2 text-xs text-muted-foreground">
-            {formatDateTime(activeSession.createdAt, locale)}
+            <DateTimeText value={activeSession.createdAt} locale={locale} />
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -378,7 +385,9 @@ export function SessionView() {
             <div className="grid gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t("metadata.created")}</span>
-                <span>{formatDateTime(activeSession.createdAt, locale)}</span>
+                <span>
+                  <DateTimeText value={activeSession.createdAt} locale={locale} />
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t("metadata.duration")}</span>
@@ -413,7 +422,11 @@ export function SessionView() {
               <div className="flex items-start justify-between gap-4">
                 <span className="text-muted-foreground">{t("metadata.audio")}</span>
                 {activeSession.audioUrl ? (
-                  <AudioPreview src={activeSession.audioUrl} />
+                  <AudioPreview
+                    src={activeSession.audioUrl}
+                    mime={activeSession.audioMime}
+                    fallbackDurationSec={metadata.durationSec}
+                  />
                 ) : (
                   <span className="text-muted-foreground">{t("metadata.noAudio")}</span>
                 )}

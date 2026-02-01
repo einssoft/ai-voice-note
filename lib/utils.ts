@@ -34,7 +34,12 @@ export function matchesHotkey(event: KeyboardEvent, hotkey: string) {
 
   if (!parts.length) return false;
 
-  const key = parts[parts.length - 1];
+  const normalizeKey = (value: string) => {
+    if (value === "esc") return "escape";
+    return value;
+  };
+
+  const key = normalizeKey(parts[parts.length - 1]);
   const modifiers = new Set(parts.slice(0, -1));
 
   const needsCtrl = modifiers.has("ctrl") || modifiers.has("control");
@@ -47,5 +52,5 @@ export function matchesHotkey(event: KeyboardEvent, hotkey: string) {
   if (needsAlt && !event.altKey) return false;
   if (needsMeta && !event.metaKey) return false;
 
-  return event.key.toLowerCase() === key;
+  return normalizeKey(event.key.toLowerCase()) === key;
 }

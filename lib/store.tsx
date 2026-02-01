@@ -1,10 +1,21 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { seedSessions, getDefaultEnrichments } from "@/lib/mock";
+import { seedSessions, getDefaultEnrichments, getDefaultKeywordsPrompt } from "@/lib/mock";
 import { AudioRecorder } from "@/lib/audioRecorder";
 import { enrichTranscript, transcribeAudio, extractKeywords } from "@/lib/processing";
 import { getMessages, t as translate, type Locale } from "@/lib/i18n";
+import {
+  fetchAudioBlob as fetchApiAudioBlob,
+  fetchSessions as fetchApiSessions,
+  fetchSettings as fetchApiSettings,
+  getAudioUrl as getApiAudioUrl,
+  isLocalApiAvailable,
+  saveSession as saveApiSession,
+  saveSettings as saveApiSettings,
+  uploadAudio as uploadApiAudio,
+  deleteSession as deleteApiSession,
+} from "@/lib/localApi";
 
 export type Mode = string;
 export type SessionStatus = "idle" | "recording" | "processing" | "done" | "error";
@@ -27,6 +38,8 @@ export type Session = {
   transcript: string;
   enriched: string;
   audioUrl?: string;
+  audioPath?: string;
+  audioMime?: string;
   recordingStartedAt?: number;
   errorMessage?: string;
   errorDetails?: string;
@@ -43,6 +56,7 @@ export type Settings = {
     language: Locale;
     theme: "system" | "light" | "dark";
     hotkey: string;
+    cancelHotkey: string;
   };
   api: {
     whisper: {
@@ -63,6 +77,7 @@ export type Settings = {
     storeAudio: boolean;
   };
   enrichments: EnrichmentTemplate[];
+  keywordsPrompt: string;
 };
 
 const defaultSettings: Settings = {
@@ -70,6 +85,7 @@ const defaultSettings: Settings = {
     language: "de",
     theme: "system",
     hotkey: "Ctrl+Shift+R",
+    cancelHotkey: "Esc",
   },
   api: {
     whisper: {
@@ -90,6 +106,7 @@ const defaultSettings: Settings = {
     storeAudio: true,
   },
   enrichments: getDefaultEnrichments("de"),
+  keywordsPrompt: getDefaultKeywordsPrompt("de"),
 };
 
 const SETTINGS_KEY = "vi-settings";
@@ -99,17 +116,407 @@ const SESSIONS_FILE = "ai-voice-note-sessions.json";
 const LEGACY_SETTINGS_FILE = "voice-intelligence-settings.json";
 const LEGACY_SESSIONS_FILE = "voice-intelligence-sessions.json";
 
+const LEGACY_KEYWORD_PROMPTS: Partial<Record<Locale, string>> = {
+  de: "Extrahiere 4-6 praegnante Keywords oder kurze Schluesselphrasen aus dem Transkript. Gib ausschliesslich ein JSON-Array von Strings zurueck.",
+  en: "Extract 4-6 concise keywords or short key phrases from the transcript. Return only a JSON array of strings.",
+  fr: "Extrait 4 à 6 mots-clés concis ou courtes expressions du transcript. Renvoyer uniquement un tableau JSON de chaînes.",
+  it: "Estrai 4-6 parole chiave concise o brevi frasi dal transcript. Restituisci solo un array JSON di stringhe.",
+};
+
+const LEGACY_ENRICHMENT_PROMPTS: Partial<Record<Locale, Record<string, string>>> = {
+  de: {
+    smart: "Erstelle Smart Notes mit:\n- Kurze Zusammenfassung\n- Entscheidungen\n- Naechste Schritte",
+    tasks: "Extrahiere alle Aufgaben und To-dos als kurze Liste. Halte jeden Punkt knapp.",
+    meeting: "Erstelle strukturierte Meeting-Notizen:\n- Zusammenfassung\n- Kernthemen\n- Entscheidungen\n- Action Items",
+    email: "Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript. Fuege eine Betreffzeile hinzu.",
+  },
+  en: {
+    smart: "Create smart notes with:\n- Short summary\n- Decisions\n- Next steps",
+    tasks: "Extract all action items and tasks as a short bullet list. Keep each item concise.",
+    meeting: "Create well-structured meeting notes:\n- Summary\n- Key points\n- Decisions\n- Action items",
+    email: "Draft a concise professional email based on the transcript. Include a subject line.",
+  },
+  fr: {
+    smart: "Crée des notes intelligentes avec :\n- Résumé court\n- Décisions\n- Prochaines étapes",
+    tasks: "Extrait toutes les actions et tâches sous forme de liste concise.",
+    meeting: "Crée des notes de réunion structurées :\n- Résumé\n- Points clés\n- Décisions\n- Actions",
+    email: "Rédige un e‑mail professionnel concis basé sur la transcription. Inclure un objet.",
+  },
+  it: {
+    smart: "Crea note intelligenti con:\n- Breve sintesi\n- Decisioni\n- Prossimi passi",
+    tasks: "Estrai tutte le attività e i to‑do come elenco conciso.",
+    meeting: "Crea note di riunione strutturate:\n- Sintesi\n- Punti chiave\n- Decisioni\n- Azioni",
+    email: "Redigi un’e‑mail professionale concisa basata sulla trascrizione. Includi un oggetto.",
+  },
+};
+
 const isTauri = () =>
   typeof window !== "undefined" &&
   ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+
+const AUDIO_DIR = "audio";
+const AUDIO_EXTENSION_BY_MIME: Record<string, string> = {
+  "audio/webm": "webm",
+  "audio/ogg": "ogg",
+  "audio/mp4": "m4a",
+  "audio/mpeg": "mp3",
+  "audio/wav": "wav",
+};
+const AUDIO_MIME_BY_EXTENSION: Record<string, string> = {
+  webm: "audio/webm",
+  ogg: "audio/ogg",
+  mp4: "audio/mp4",
+  m4a: "audio/mp4",
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+};
+const BASE64_SUFFIX = ".b64";
+const BASE64_CHUNK_SIZE = 0x8000;
+
+function resolveAudioExtension(mime: string) {
+  const normalized = (mime || "").split(";")[0].trim().toLowerCase();
+  if (AUDIO_EXTENSION_BY_MIME[normalized]) return AUDIO_EXTENSION_BY_MIME[normalized];
+  if (normalized.startsWith("audio/")) {
+    const suffix = normalized.replace("audio/", "");
+    if (suffix) return suffix;
+  }
+  return "webm";
+}
+
+function resolveAudioMime(path: string, fallback?: string) {
+  const parts = path.split(".");
+  const ext = parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+  const fallbackType = fallback?.split(";")[0].trim();
+  return AUDIO_MIME_BY_EXTENSION[ext] ?? fallbackType ?? "audio/webm";
+}
+
+function encodeBase64(bytes: Uint8Array) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += BASE64_CHUNK_SIZE) {
+    const chunk = bytes.slice(i, i + BASE64_CHUNK_SIZE);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
+function decodeBase64(base64: string) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function resolveLocale(value: unknown): Locale {
+  if (value === "de" || value === "en" || value === "fr" || value === "it") return value;
+  return defaultSettings.general.language;
+}
+
+function normalizePromptText(value: string) {
+  return value.trim().replaceAll("\r\n", "\n").replaceAll("\u00df", "ss");
+}
+
+function migrateKeywordsPrompt(prompt: string, locale: Locale, fallback: string) {
+  if (!prompt.trim()) return fallback;
+  const legacy = LEGACY_KEYWORD_PROMPTS[locale];
+  if (legacy && normalizePromptText(prompt) === normalizePromptText(legacy)) {
+    return fallback;
+  }
+  return prompt;
+}
+
+function migrateEnrichments(
+  enrichments: EnrichmentTemplate[],
+  locale: Locale,
+  defaults: EnrichmentTemplate[]
+) {
+  if (!enrichments.length) return defaults;
+  const defaultsById = new Map(defaults.map((item) => [item.id, item.prompt]));
+  const legacyById = LEGACY_ENRICHMENT_PROMPTS[locale] ?? {};
+  return enrichments.map((item) => {
+    const nextPrompt = defaultsById.get(item.id);
+    if (!nextPrompt) return item;
+    const currentPrompt = (item.prompt ?? "").trim();
+    if (!currentPrompt) return { ...item, prompt: nextPrompt };
+    const legacyPrompt = legacyById[item.id];
+    if (legacyPrompt && normalizePromptText(currentPrompt) === normalizePromptText(legacyPrompt)) {
+      return { ...item, prompt: nextPrompt };
+    }
+    return item;
+  });
+}
+
+function shouldConvertForCompatibility(blob: Blob) {
+  const type = (blob.type || "").toLowerCase();
+  if (type.includes("webm") || type.includes("ogg")) return true;
+  if ("name" in blob && typeof blob.name === "string") {
+    const lower = blob.name.toLowerCase();
+    if (lower.endsWith(".webm") || lower.endsWith(".ogg")) return true;
+  }
+  return false;
+}
+
+function audioBufferToWav(buffer: AudioBuffer) {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const numFrames = buffer.length;
+  const bytesPerSample = 2;
+  const blockAlign = numChannels * bytesPerSample;
+  const dataSize = numFrames * blockAlign;
+  const totalSize = 44 + dataSize;
+  const arrayBuffer = new ArrayBuffer(totalSize);
+  const view = new DataView(arrayBuffer);
+
+  let offset = 0;
+  const writeString = (value: string) => {
+    for (let i = 0; i < value.length; i += 1) {
+      view.setUint8(offset, value.charCodeAt(i));
+      offset += 1;
+    }
+  };
+  const writeUint16 = (value: number) => {
+    view.setUint16(offset, value, true);
+    offset += 2;
+  };
+  const writeUint32 = (value: number) => {
+    view.setUint32(offset, value, true);
+    offset += 4;
+  };
+
+  writeString("RIFF");
+  writeUint32(36 + dataSize);
+  writeString("WAVE");
+  writeString("fmt ");
+  writeUint32(16);
+  writeUint16(1);
+  writeUint16(numChannels);
+  writeUint32(sampleRate);
+  writeUint32(sampleRate * blockAlign);
+  writeUint16(blockAlign);
+  writeUint16(16);
+  writeString("data");
+  writeUint32(dataSize);
+
+  const channels: Float32Array[] = [];
+  for (let i = 0; i < numChannels; i += 1) {
+    channels.push(buffer.getChannelData(i));
+  }
+  for (let i = 0; i < numFrames; i += 1) {
+    for (let channel = 0; channel < numChannels; channel += 1) {
+      let sample = channels[channel][i];
+      sample = Math.max(-1, Math.min(1, sample));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      offset += 2;
+    }
+  }
+
+  return arrayBuffer;
+}
+
+async function convertBlobToWav(blob: Blob) {
+  if (typeof AudioContext === "undefined") return null;
+  const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+  const context = new AudioContextCtor();
+  try {
+    const buffer = await context.decodeAudioData(await blob.arrayBuffer());
+    const wavBuffer = audioBufferToWav(buffer);
+    return new Blob([wavBuffer], { type: "audio/wav" });
+  } catch {
+    return null;
+  } finally {
+    try {
+      await context.close();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+async function normalizeAudioForApi(blob: Blob) {
+  if (isTauri()) return blob;
+  if (!shouldConvertForCompatibility(blob)) return blob;
+  const converted = await convertBlobToWav(blob);
+  return converted ?? blob;
+}
+
+async function ensureAudioDir(dir: "AppData" | "AppConfig") {
+  if (!isTauri()) return;
+  try {
+    const { mkdir, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+    const base = dir === "AppConfig" ? BaseDirectory.AppConfig : BaseDirectory.AppData;
+    await mkdir(AUDIO_DIR, { baseDir: base, recursive: true });
+  } catch {
+    // ignore
+  }
+}
+
+async function writeBinaryAudio(
+  filename: string,
+  buffer: Uint8Array,
+  dir: "AppData" | "AppConfig"
+) {
+  const { writeFile, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+  await ensureAudioDir(dir);
+  const base = dir === "AppConfig" ? BaseDirectory.AppConfig : BaseDirectory.AppData;
+  await writeFile(filename, buffer, { baseDir: base });
+}
+
+async function writeBase64Audio(filename: string, buffer: Uint8Array) {
+  const { writeTextFile, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+  await ensureAudioDir("AppConfig");
+  const base64 = encodeBase64(buffer);
+  await writeTextFile(filename + BASE64_SUFFIX, base64, { baseDir: BaseDirectory.AppConfig });
+  return filename + BASE64_SUFFIX;
+}
+
+async function persistAudioBlob(sessionId: string, blob: Blob) {
+  if (!isTauri()) return null;
+  try {
+    let extension = resolveAudioExtension(blob.type);
+    if (!blob.type && "name" in blob && typeof blob.name === "string") {
+      const nameParts = blob.name.split(".");
+      const nameExt = nameParts.length > 1 ? nameParts[nameParts.length - 1].toLowerCase() : "";
+      if (nameExt) extension = nameExt;
+    }
+    const filename = `${AUDIO_DIR}/${sessionId}.${extension}`;
+    const buffer = new Uint8Array(await blob.arrayBuffer());
+    const mime = blob.type || AUDIO_MIME_BY_EXTENSION[extension] || "audio/webm";
+    let lastError: unknown;
+    for (const dir of ["AppData", "AppConfig"] as const) {
+      try {
+        await writeBinaryAudio(filename, buffer, dir);
+        try {
+          const { readFile, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+          const base = dir === "AppConfig" ? BaseDirectory.AppConfig : BaseDirectory.AppData;
+          await readFile(filename, { baseDir: base });
+          return { path: filename, mime };
+        } catch {
+          const base64Path = await writeBase64Audio(filename, buffer);
+          return { path: base64Path, mime };
+        }
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    try {
+      const base64Path = await writeBase64Audio(filename, buffer);
+      return { path: base64Path, mime };
+    } catch (error) {
+      lastError = error;
+    }
+    void lastError;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function readAudioBlob(path: string, mime?: string) {
+  if (!isTauri()) return null;
+  try {
+    const { readFile, readTextFile, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+    if (path.endsWith(BASE64_SUFFIX)) {
+      const base64 = await readTextFile(path, { baseDir: BaseDirectory.AppConfig });
+      const bytes = decodeBase64(base64);
+      return new Blob([bytes], { type: resolveAudioMime(path.replace(BASE64_SUFFIX, ""), mime) });
+    }
+    try {
+      const data = await readFile(path, { baseDir: BaseDirectory.AppData });
+      return new Blob([data], { type: resolveAudioMime(path, mime) });
+    } catch {
+      try {
+        const data = await readFile(path, { baseDir: BaseDirectory.AppConfig });
+        return new Blob([data], { type: resolveAudioMime(path, mime) });
+      } catch {
+        const base64 = await readTextFile(path + BASE64_SUFFIX, { baseDir: BaseDirectory.AppConfig });
+        const bytes = decodeBase64(base64);
+        return new Blob([bytes], { type: resolveAudioMime(path, mime) });
+      }
+    }
+  } catch {
+    return null;
+  }
+}
+
+async function removeAudioFile(path: string) {
+  if (!isTauri()) return;
+  try {
+    const { remove, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+    const paths = path.endsWith(BASE64_SUFFIX)
+      ? [path, path.replace(BASE64_SUFFIX, "")]
+      : [path, path + BASE64_SUFFIX];
+    for (const target of paths) {
+      try {
+        await remove(target, { baseDir: BaseDirectory.AppData });
+      } catch {
+        try {
+          await remove(target, { baseDir: BaseDirectory.AppConfig });
+        } catch {
+          // ignore
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+async function getAudioDuration(blob: Blob) {
+  if (typeof Audio === "undefined") return 0;
+  return new Promise<number>((resolve) => {
+    const audio = new Audio();
+    const url = URL.createObjectURL(blob);
+    let settled = false;
+    let timeoutId = 0;
+    const cleanup = () => {
+      window.clearTimeout(timeoutId);
+      audio.removeEventListener("loadedmetadata", handleLoaded);
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("error", handleError);
+      URL.revokeObjectURL(url);
+    };
+    const finish = (value: number) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+    timeoutId = window.setTimeout(() => finish(0), 4000);
+    const handleTimeUpdate = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        finish(audio.duration);
+      }
+    };
+    const handleLoaded = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        finish(audio.duration);
+        return;
+      }
+      audio.addEventListener("timeupdate", handleTimeUpdate);
+      audio.currentTime = 1e101;
+    };
+    const handleError = () => finish(0);
+    audio.addEventListener("loadedmetadata", handleLoaded);
+    audio.addEventListener("error", handleError);
+    audio.preload = "metadata";
+    audio.src = url;
+  });
+}
+
+async function resolveAudioDurationSec(blob: Blob, fallback = 0) {
+  const duration = await getAudioDuration(blob);
+  const rounded = Number.isFinite(duration) ? Math.round(duration) : 0;
+  return Math.max(fallback, rounded);
+}
 
 async function readFromTauri(filename: string) {
   if (!isTauri()) return null;
   try {
     const { readTextFile, exists, BaseDirectory } = await import("@tauri-apps/plugin-fs");
-    const fileExists = await exists(filename, { dir: BaseDirectory.AppConfig });
+    const fileExists = await exists(filename, { baseDir: BaseDirectory.AppConfig });
     if (!fileExists) return null;
-    return await readTextFile(filename, { dir: BaseDirectory.AppConfig });
+    return await readTextFile(filename, { baseDir: BaseDirectory.AppConfig });
   } catch {
     return null;
   }
@@ -118,8 +525,8 @@ async function readFromTauri(filename: string) {
 async function writeToTauri(filename: string, contents: string) {
   if (!isTauri()) return;
   try {
-    const { writeFile, BaseDirectory } = await import("@tauri-apps/plugin-fs");
-    await writeFile({ path: filename, contents }, { dir: BaseDirectory.AppConfig });
+    const { writeTextFile, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+    await writeTextFile(filename, contents, { baseDir: BaseDirectory.AppConfig });
   } catch {
     // ignore
   }
@@ -138,12 +545,29 @@ function normalizeSettings(input: Partial<Settings> | any): Settings {
   const legacy = input ?? {};
   const general = legacy.general ?? {};
   const api = legacy.api ?? {};
+  const language = resolveLocale(
+    general.language ?? legacy.language ?? defaultSettings.general.language
+  );
+  const localeDefaults = {
+    enrichments: getDefaultEnrichments(language),
+    keywordsPrompt: getDefaultKeywordsPrompt(language),
+  };
+  const keywordsPrompt = migrateKeywordsPrompt(
+    legacy.keywordsPrompt ?? legacy.keywords?.prompt ?? localeDefaults.keywordsPrompt,
+    language,
+    localeDefaults.keywordsPrompt
+  );
+  const enrichments = Array.isArray(legacy.enrichments) && legacy.enrichments.length
+    ? legacy.enrichments
+    : localeDefaults.enrichments;
 
   return {
     general: {
-      language: general.language ?? legacy.language ?? defaultSettings.general.language,
+      language,
       theme: general.theme ?? legacy.theme ?? defaultSettings.general.theme,
       hotkey: general.hotkey ?? legacy.hotkey ?? defaultSettings.general.hotkey,
+      cancelHotkey:
+        general.cancelHotkey ?? legacy.cancelHotkey ?? defaultSettings.general.cancelHotkey,
     },
     api: {
       whisper: {
@@ -176,9 +600,8 @@ function normalizeSettings(input: Partial<Settings> | any): Settings {
       storeAudio:
         legacy.privacy?.storeAudio ?? defaultSettings.privacy.storeAudio,
     },
-    enrichments: Array.isArray(legacy.enrichments) && legacy.enrichments.length
-      ? legacy.enrichments
-      : defaultSettings.enrichments,
+    enrichments: migrateEnrichments(enrichments, language, localeDefaults.enrichments),
+    keywordsPrompt,
   };
 }
 
@@ -202,7 +625,7 @@ type StoreState = {
   searchQuery: string;
   mode: Mode;
   settings: Settings;
-  settingsSource: "tauri" | "local" | "default";
+  settingsSource: "api" | "tauri" | "local" | "default";
   recordingLevel: number;
 };
 
@@ -214,8 +637,9 @@ type StoreActions = {
   deleteSession: (id: string) => void;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
-  uploadAudio: (file: File) => void;
-  retryProcessing: () => void;
+  uploadAudio: (file: File) => Promise<void>;
+  retryProcessing: () => Promise<void>;
+  cancelProcessing: () => void;
   updateSessionTitle: (id: string, title: string) => void;
   updateSettings: (settings: Settings) => Promise<void>;
   toggleTheme: () => void;
@@ -245,7 +669,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [mode, setMode] = useState<Mode>(defaultSettings.enrichments[0]?.id ?? "smart");
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [settingsSource, setSettingsSource] = useState<"tauri" | "local" | "default">("default");
+  const [settingsSource, setSettingsSource] = useState<
+    "api" | "tauri" | "local" | "default"
+  >("default");
   const [isHydrated, setIsHydrated] = useState(false);
   const [recordingLevel, setRecordingLevel] = useState(0);
   const hasLoadedSessions = useRef(false);
@@ -257,17 +683,19 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const sessionsRef = useRef<Session[]>(sessions);
   const settingsRef = useRef<Settings>(settings);
   const modeRef = useRef<Mode>(mode);
+  const settingsSourceRef = useRef(settingsSource);
+  const apiConversionRef = useRef<Set<string>>(new Set());
+  const processingControllersRef = useRef<Record<string, AbortController>>({});
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       const localSettingsKey =
         typeof window !== "undefined" ? localStorage.getItem(SETTINGS_KEY) : null;
+      const localSessionsKey =
+        typeof window !== "undefined" ? localStorage.getItem(SESSIONS_KEY) : null;
       const localSettingsRaw = safeParseJson<Settings>(localSettingsKey, defaultSettings);
-      const localSessions = safeParseJson<Session[]>(
-        typeof window !== "undefined" ? localStorage.getItem(SESSIONS_KEY) : null,
-        seedSessions
-      );
+      const localSessions = safeParseJson<Session[]>(localSessionsKey, seedSessions);
 
       const tauriSettingsRaw =
         (await readFromTauri(SETTINGS_FILE)) ?? (await readFromTauri(LEGACY_SETTINGS_FILE));
@@ -275,14 +703,109 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         (await readFromTauri(SESSIONS_FILE)) ?? (await readFromTauri(LEGACY_SESSIONS_FILE));
       const tauriSettings = safeParseJson<Settings>(tauriSettingsRaw, localSettingsRaw);
       const tauriSessions = safeParseJson<Session[]>(tauriSessionsRaw, localSessions);
+      const fallbackSettings = tauriSettingsRaw ? tauriSettings : localSettingsRaw;
+      const fallbackSessions = tauriSessionsRaw ? tauriSessions : localSessions;
+      const hasStoredSessions = Boolean(tauriSessionsRaw || localSessionsKey);
 
-      const loadedSettings = normalizeSettings(tauriSettingsRaw ? tauriSettings : localSettingsRaw);
+      const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+      let apiAvailable = false;
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        apiAvailable = await isLocalApiAvailable(true);
+        if (apiAvailable) break;
+        await wait(250);
+      }
+
+      if (apiAvailable) {
+        const [settingsResult, sessionsResult] = await Promise.allSettled([
+          fetchApiSettings(),
+          fetchApiSessions(),
+        ]);
+        const apiSettings =
+          settingsResult.status === "fulfilled" ? settingsResult.value : null;
+        const apiSessionsRaw =
+          sessionsResult.status === "fulfilled" ? sessionsResult.value : [];
+        const apiSessions = apiSessionsRaw.map((session) => ({
+          ...session,
+          audioUrl: session.audioUrl || undefined,
+        }));
+        const loadedSettings = normalizeSettings(apiSettings ?? fallbackSettings);
+        const loadedSessions = apiSessions.length ? apiSessions : fallbackSessions;
+        const shouldSeedApiSettings =
+          settingsResult.status !== "fulfilled" ||
+          !apiSettings ||
+          (typeof apiSettings === "object" && Object.keys(apiSettings).length === 0);
+        if (!active) return;
+        if (!hasUserUpdatedSettings.current) {
+          setSettings(loadedSettings);
+        }
+        if (!hasUserModifiedSessions.current) {
+          setSessions(loadedSessions.length ? loadedSessions : seedSessions);
+        }
+        setSettingsSource("api");
+        hasLoadedSessions.current = true;
+        setIsHydrated(true);
+        if (shouldSeedApiSettings) {
+          void saveApiSettings(loadedSettings);
+        }
+        if (!apiSessions.length && hasStoredSessions && loadedSessions.length) {
+          void (async () => {
+            await Promise.all(loadedSessions.map((session) => saveApiSession(session)));
+            if (!isTauri()) return;
+            const updates: Record<string, Partial<Session>> = {};
+            for (const session of loadedSessions) {
+              if (!session.audioPath || session.audioUrl) continue;
+              const blob = await readAudioBlob(session.audioPath, session.audioMime);
+              if (!blob) continue;
+              await uploadApiAudio(session.id, blob);
+              updates[session.id] = {
+                audioUrl: getApiAudioUrl(session.id),
+                audioPath: undefined,
+                audioMime: blob.type || session.audioMime,
+              };
+            }
+            if (Object.keys(updates).length) {
+              setSessions((prev) =>
+                prev.map((session) =>
+                  updates[session.id] ? { ...session, ...updates[session.id] } : session
+                )
+              );
+            }
+          })();
+        }
+        if (!isTauri() && apiSessions.length) {
+          void (async () => {
+            for (const session of apiSessions) {
+              if (!session.audioUrl) continue;
+              const mime = (session.audioMime || "").toLowerCase();
+              if (!mime.includes("webm") && !mime.includes("ogg")) continue;
+              if (apiConversionRef.current.has(session.id)) continue;
+              apiConversionRef.current.add(session.id);
+              const blob = await fetchApiAudioBlob(session.id);
+              if (!blob) continue;
+              const converted = await normalizeAudioForApi(blob);
+              if (converted === blob) continue;
+              await uploadApiAudio(session.id, converted);
+              const updated: Partial<Session> = {
+                audioMime: converted.type || session.audioMime,
+                audioUrl: getApiAudioUrl(session.id),
+              };
+              setSessions((prev) =>
+                prev.map((item) => (item.id === session.id ? { ...item, ...updated } : item))
+              );
+              void saveApiSession({ ...session, ...updated });
+            }
+          })();
+        }
+        return;
+      }
+
+      const loadedSettings = normalizeSettings(fallbackSettings);
       const resolvedSource = tauriSettingsRaw
         ? "tauri"
         : localSettingsKey
         ? "local"
         : "default";
-      const loadedSessions = tauriSessionsRaw ? tauriSessions : localSessions;
+      const loadedSessions = fallbackSessions;
 
       if (!active) return;
       if (!hasUserUpdatedSettings.current) {
@@ -311,8 +834,44 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   }, [settings]);
 
   useEffect(() => {
+    settingsSourceRef.current = settingsSource;
+  }, [settingsSource]);
+
+  useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
+
+  useEffect(() => {
+    if (!activeSessionId) return;
+    if (settingsSourceRef.current === "api") return;
+    const session = getSessionById(activeSessionId);
+    if (!session?.audioPath || session.audioUrl) return;
+    let active = true;
+    void (async () => {
+      const blob = await readAudioBlob(session.audioPath, session.audioMime);
+      if (!active) return;
+      if (!blob) {
+        updateSession(session.id, { audioPath: undefined, audioMime: undefined });
+        return;
+      }
+      setAudioBlob(session.id, blob);
+      const url = URL.createObjectURL(blob);
+      const updates: Partial<Session> = {
+        audioUrl: url,
+        audioMime: session.audioMime ?? blob.type,
+      };
+      if (session.metadata.durationSec <= 0) {
+        const durationSec = await resolveAudioDurationSec(blob, 0);
+        if (durationSec > 0) {
+          updates.metadata = { ...session.metadata, durationSec };
+        }
+      }
+      updateSession(session.id, updates);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [activeSessionId]);
 
   useEffect(() => {
     if (!settings.enrichments.length) return;
@@ -323,17 +882,34 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated && !hasUserUpdatedSettings.current) return;
-    const payload = JSON.stringify(settings);
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(SETTINGS_KEY, payload);
+    if (settingsSourceRef.current === "api") {
+      void saveApiSettings(settings);
+    } else {
+      const payload = JSON.stringify(settings);
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(SETTINGS_KEY, payload);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
+      void writeToTauri(SETTINGS_FILE, payload);
     }
-    void writeToTauri(SETTINGS_FILE, payload);
     applyTheme(settings.general.theme);
   }, [settings, isHydrated]);
+
+  const saveSessionTimeouts = useRef<Record<string, number>>({});
+
+  const queueSessionSave = (session: Session) => {
+    if (settingsSourceRef.current !== "api") return;
+    const existing = saveSessionTimeouts.current[session.id];
+    if (existing) {
+      window.clearTimeout(existing);
+    }
+    saveSessionTimeouts.current[session.id] = window.setTimeout(() => {
+      void saveApiSession(session);
+    }, 200);
+  };
 
   const createSession = (partial: Partial<Session>) => {
     const newSession: Session = {
@@ -356,17 +932,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     hasUserModifiedSessions.current = true;
     setSessions((prev) => {
       const next = [newSession, ...prev];
-      const serializable = next.map(({ audioUrl, ...rest }) => rest);
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
+      if (settingsSourceRef.current !== "api") {
+        const serializable = next.map(({ audioUrl, ...rest }) => rest);
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
+          }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
+        void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
       }
-      void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
       return next;
     });
+    queueSessionSave(newSession);
     setActiveSessionId(newSession.id);
     return newSession;
   };
@@ -374,18 +953,34 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const updateSession = (id: string, updates: Partial<Session>) => {
     hasUserModifiedSessions.current = true;
     setSessions((prev) => {
-      const next = prev.map((session) =>
-        session.id === id ? { ...session, ...updates } : session
-      );
-      const serializable = next.map(({ audioUrl, ...rest }) => rest);
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
+      let updatedSession: Session | null = null;
+      const next = prev.map((session) => {
+        if (session.id !== id) return session;
+        if ("audioUrl" in updates && session.audioUrl && session.audioUrl !== updates.audioUrl) {
+          try {
+            URL.revokeObjectURL(session.audioUrl);
+          } catch {
+            // ignore
+          }
         }
-      } catch {
-        // ignore
+        const merged = { ...session, ...updates };
+        updatedSession = merged;
+        return merged;
+      });
+      if (settingsSourceRef.current !== "api") {
+        const serializable = next.map(({ audioUrl, ...rest }) => rest);
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
+          }
+        } catch {
+          // ignore
+        }
+        void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
       }
-      void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
+      if (updatedSession) {
+        queueSessionSave(updatedSession);
+      }
       return next;
     });
   };
@@ -399,6 +994,28 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const clearAudioBlob = (id: string) => {
     delete audioBlobsRef.current[id];
   };
+
+  const isAbortError = (error: unknown) =>
+    error instanceof DOMException
+      ? error.name === "AbortError"
+      : Boolean((error as any)?.name === "AbortError");
+
+  const startProcessingController = (sessionId: string) => {
+    const existing = processingControllersRef.current[sessionId];
+    if (existing) {
+      existing.abort();
+    }
+    const controller = new AbortController();
+    processingControllersRef.current[sessionId] = controller;
+    return controller;
+  };
+
+  const clearProcessingController = (sessionId: string) => {
+    delete processingControllersRef.current[sessionId];
+  };
+
+  const getProcessingSession = () =>
+    sessionsRef.current.find((session) => session.status === "processing");
 
   const buildErrorDetails = (
     stage: "transcribing" | "enriching",
@@ -437,6 +1054,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const getActiveSession = () => sessions.find((session) => session.id === activeSessionId) ?? null;
 
   const processAudio = async (sessionId: string, blob: Blob, durationSec: number) => {
+    const controller = startProcessingController(sessionId);
+    const signal = controller.signal;
     const settingsSnapshot = settingsRef.current;
     const sessionSnapshot = getSessionById(sessionId);
     const sessionMode = sessionSnapshot?.mode ?? modeRef.current;
@@ -467,7 +1086,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     let transcript = "";
     try {
-      transcript = await transcribeAudio(blob, settingsSnapshot);
+      transcript = await transcribeAudio(blob, settingsSnapshot, signal);
+      if (signal.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
       updateSession(sessionId, {
         transcript,
         stage: "enriching",
@@ -475,6 +1097,26 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         errorDetails: undefined,
       });
     } catch (error) {
+      if (signal.aborted || isAbortError(error)) {
+        const locale = settingsSnapshot.general.language;
+        const message = translate(getMessages(locale), "errors.processingCancelled");
+        const current = getSessionById(sessionId);
+        if (current?.status === "error" && current.errorMessage === message) {
+          clearProcessingController(sessionId);
+          return;
+        }
+        updateSession(sessionId, {
+          status: "error",
+          stage: undefined,
+          errorMessage: message,
+          errorDetails: buildErrorDetails("transcribing", settingsSnapshot, message),
+        });
+        if (!settingsSnapshot.privacy.storeAudio) {
+          clearAudioBlob(sessionId);
+        }
+        clearProcessingController(sessionId);
+        return;
+      }
       const locale = settingsSnapshot.general.language;
       const fallback = translate(getMessages(locale), "errors.transcriptionFailed");
       const message =
@@ -488,6 +1130,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       if (!settingsSnapshot.privacy.storeAudio) {
         clearAudioBlob(sessionId);
       }
+      clearProcessingController(sessionId);
       return;
     }
 
@@ -495,7 +1138,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       const { enriched, keywords } = await enrichTranscript(
         transcript,
         template?.prompt || "",
-        settingsSnapshot
+        settingsSnapshot,
+        signal
       );
       updateSession(sessionId, {
         status: "done",
@@ -506,12 +1150,27 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         metadata: {
           ...baseMetadata,
           durationSec,
-          keywords: keywords.length ? keywords : extractKeywords(transcript),
+          keywords: keywords.length ? keywords : extractKeywords(transcript, 6),
           whisperProvider: settingsSnapshot.api.whisper.provider,
           llmProvider: settingsSnapshot.api.llm.provider,
         },
       });
     } catch (error) {
+      if (signal.aborted || isAbortError(error)) {
+        const locale = settingsSnapshot.general.language;
+        const message = translate(getMessages(locale), "errors.processingCancelled");
+        const current = getSessionById(sessionId);
+        if (current?.status === "error" && current.errorMessage === message) {
+          return;
+        }
+        updateSession(sessionId, {
+          status: "error",
+          stage: undefined,
+          errorMessage: message,
+          errorDetails: buildErrorDetails("enriching", settingsSnapshot, message),
+        });
+        return;
+      }
       const locale = settingsSnapshot.general.language;
       const fallback = translate(getMessages(locale), "errors.enrichmentFailed");
       const message =
@@ -526,6 +1185,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       if (!settingsSnapshot.privacy.storeAudio) {
         clearAudioBlob(sessionId);
       }
+      clearProcessingController(sessionId);
     }
   };
 
@@ -542,9 +1202,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     setMode,
     selectSession: (id) => setActiveSessionId(id),
     createEmptySession: () => {
+      if (getProcessingSession()) return;
       createSession({ status: "idle" });
     },
     deleteSession: (id) => {
+      if (getProcessingSession()) return;
       hasUserModifiedSessions.current = true;
       const existing = getSessionById(id);
       if (existing?.audioUrl) {
@@ -554,18 +1216,25 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           // ignore
         }
       }
+      if (settingsSourceRef.current === "api") {
+        void deleteApiSession(id);
+      } else if (existing?.audioPath) {
+        void removeAudioFile(existing.audioPath);
+      }
       clearAudioBlob(id);
       setSessions((prev) => {
         const next = prev.filter((session) => session.id !== id);
-        const serializable = next.map(({ audioUrl, ...rest }) => rest);
-        try {
-          if (typeof window !== "undefined") {
-            localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
+        if (settingsSourceRef.current !== "api") {
+          const serializable = next.map(({ audioUrl, ...rest }) => rest);
+          try {
+            if (typeof window !== "undefined") {
+              localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
+            }
+          } catch {
+            // ignore
           }
-        } catch {
-          // ignore
+          void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
         }
-        void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
         if (activeSessionId === id) {
           setActiveSessionId(next[0]?.id ?? null);
         }
@@ -573,6 +1242,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       });
     },
     startRecording: async () => {
+      if (getProcessingSession()) return;
       if (
         typeof navigator === "undefined" ||
         !navigator.mediaDevices?.getUserMedia ||
@@ -627,19 +1297,54 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             cleanupRecorder();
             return;
           }
-          setAudioBlob(targetId, blob);
-          if (settingsRef.current.privacy.storeAudio) {
+          let workingBlob = blob;
+          if (settingsSourceRef.current === "api") {
+            if (settingsRef.current.privacy.storeAudio) {
+              workingBlob = await normalizeAudioForApi(blob);
+              await uploadApiAudio(targetId, workingBlob);
+              updateSession(targetId, {
+                audioUrl: getApiAudioUrl(targetId),
+                audioPath: undefined,
+                audioMime: workingBlob.type || blob.type || "audio/webm",
+                errorMessage: undefined,
+                errorDetails: undefined,
+              });
+            } else {
+              updateSession(targetId, {
+                audioUrl: undefined,
+                audioPath: undefined,
+                audioMime: undefined,
+                errorMessage: undefined,
+                errorDetails: undefined,
+              });
+            }
+          } else if (settingsRef.current.privacy.storeAudio) {
+            const persisted = await persistAudioBlob(targetId, blob);
             const url = URL.createObjectURL(blob);
-          updateSession(targetId, { audioUrl: url, errorMessage: undefined, errorDetails: undefined });
-        } else {
-          updateSession(targetId, { errorMessage: undefined, errorDetails: undefined });
-        }
+            updateSession(targetId, {
+              audioUrl: url,
+              audioPath: persisted?.path,
+              audioMime: persisted?.mime ?? blob.type,
+              errorMessage: undefined,
+              errorDetails: undefined,
+            });
+          } else {
+            updateSession(targetId, {
+              audioUrl: undefined,
+              audioPath: undefined,
+              audioMime: undefined,
+              errorMessage: undefined,
+              errorDetails: undefined,
+            });
+          }
+          setAudioBlob(targetId, workingBlob);
 
           const currentSession = getSessionById(targetId);
           const elapsed = currentSession?.recordingStartedAt
             ? Math.max(0, Math.floor((Date.now() - currentSession.recordingStartedAt) / 1000))
             : 0;
-          await processAudio(targetId, blob, elapsed);
+          const durationSec = await resolveAudioDurationSec(workingBlob, elapsed);
+          await processAudio(targetId, workingBlob, durationSec);
           cleanupRecorder();
         });
 
@@ -694,24 +1399,90 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       }
       setRecordingLevel(0);
     },
-    uploadAudio: (file: File) => {
+    uploadAudio: async (file: File) => {
       if (!file) return;
-      const session = createSession({
-        status: "processing",
-        stage: "transcribing",
-        title: file.name || "Audio Upload",
-      });
-      setAudioBlob(session.id, file);
-      if (settingsRef.current.privacy.storeAudio) {
-        const url = URL.createObjectURL(file);
-        updateSession(session.id, { audioUrl: url });
+      if (getProcessingSession()) return;
+      const active = getActiveSession();
+      const canReuse =
+        active && active.status === "idle" && !active.transcript && !active.enriched;
+      const session = canReuse
+        ? active
+        : createSession({
+            status: "processing",
+            stage: "transcribing",
+            title: file.name || "Audio Upload",
+          });
+      if (canReuse && session) {
+        updateSession(session.id, {
+          status: "processing",
+          stage: "transcribing",
+          title: file.name || "Audio Upload",
+          mode,
+          transcript: "",
+          enriched: "",
+          recordingStartedAt: undefined,
+          errorMessage: undefined,
+          errorDetails: undefined,
+          audioUrl: undefined,
+          audioPath: undefined,
+          audioMime: undefined,
+          metadata: {
+            durationSec: 0,
+            keywords: [],
+            whisperProvider: settings.api.whisper.provider,
+            llmProvider: settings.api.llm.provider,
+          },
+        });
       }
-      void processAudio(session.id, file, 0);
+      let workingBlob: Blob = file;
+      if (settingsSourceRef.current === "api") {
+        if (settingsRef.current.privacy.storeAudio) {
+          workingBlob = await normalizeAudioForApi(file);
+          await uploadApiAudio(session.id, workingBlob);
+          updateSession(session.id, {
+            audioUrl: getApiAudioUrl(session.id),
+            audioPath: undefined,
+            audioMime: workingBlob.type || file.type || "audio/webm",
+          });
+        }
+      } else if (settingsRef.current.privacy.storeAudio) {
+        const persisted = await persistAudioBlob(session.id, file);
+        const url = URL.createObjectURL(file);
+        updateSession(session.id, {
+          audioUrl: url,
+          audioPath: persisted?.path,
+          audioMime: persisted?.mime ?? file.type,
+        });
+      }
+      setAudioBlob(session.id, workingBlob);
+      const durationSec = await resolveAudioDurationSec(workingBlob, 0);
+      void processAudio(session.id, workingBlob, durationSec);
     },
-    retryProcessing: () => {
+    retryProcessing: async () => {
       const active = getActiveSession();
       if (!active) return;
-      const blob = audioBlobsRef.current[active.id];
+      if (getProcessingSession()) return;
+      let blob = audioBlobsRef.current[active.id];
+      if (!blob) {
+        if (settingsSourceRef.current === "api") {
+          blob = (await fetchApiAudioBlob(active.id)) ?? undefined;
+          if (blob) {
+            setAudioBlob(active.id, blob);
+            if (!active.audioUrl) {
+              updateSession(active.id, { audioUrl: getApiAudioUrl(active.id) });
+            }
+          }
+        } else if (active.audioPath) {
+          blob = await readAudioBlob(active.audioPath, active.audioMime) ?? undefined;
+          if (blob) {
+            setAudioBlob(active.id, blob);
+            if (!active.audioUrl) {
+              const url = URL.createObjectURL(blob);
+              updateSession(active.id, { audioUrl: url, audioMime: active.audioMime ?? blob.type });
+            }
+          }
+        }
+      }
       if (!blob) {
         const locale = settingsRef.current.general.language;
         updateSession(active.id, {
@@ -722,7 +1493,24 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         });
         return;
       }
-      void processAudio(active.id, blob, active.metadata.durationSec);
+      const durationSec =
+        active.metadata.durationSec || (await resolveAudioDurationSec(blob, 0));
+      void processAudio(active.id, blob, durationSec);
+    },
+    cancelProcessing: () => {
+      const target = getProcessingSession();
+      if (!target) return;
+      const controller = processingControllersRef.current[target.id];
+      if (controller) controller.abort();
+      clearProcessingController(target.id);
+      const locale = settingsRef.current.general.language;
+      const message = translate(getMessages(locale), "errors.processingCancelled");
+      updateSession(target.id, {
+        status: "error",
+        stage: undefined,
+        errorMessage: message,
+        errorDetails: buildErrorDetails(target.stage ?? "transcribing", settingsRef.current, message),
+      });
     },
     updateSessionTitle: (id, title) =>
       updateSession(id, { title: title.trim() ? title : "" }),
@@ -730,16 +1518,21 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       hasUserUpdatedSettings.current = true;
       const normalized = normalizeSettings(nextSettings);
       setSettings(normalized);
-      setSettingsSource(isTauri() ? "tauri" : "local");
-      const payload = JSON.stringify(normalized);
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(SETTINGS_KEY, payload);
+      if (settingsSourceRef.current === "api") {
+        setSettingsSource("api");
+        void saveApiSettings(normalized);
+      } else {
+        setSettingsSource(isTauri() ? "tauri" : "local");
+        const payload = JSON.stringify(normalized);
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(SETTINGS_KEY, payload);
+          }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
+        void writeToTauri(SETTINGS_FILE, payload);
       }
-      void writeToTauri(SETTINGS_FILE, payload);
     },
     toggleTheme: () => {
       setSettings((prev) => ({

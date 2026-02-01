@@ -15,6 +15,9 @@
   "processing.title": "Processing session",
   "processing.subtitle": "Please keep this window open.",
   "processing.audioPreview": "Audio preview",
+  "processing.overlayTitle": "Processing…",
+  "processing.overlayHint": "Please wait · Cancel with {hotkey}",
+  "audio.unsupported": "Format not supported",
   "steps.recording": "Recording",
   "steps.transcribing": "Transcribing",
   "steps.enriching": "Enriching",
@@ -56,6 +59,7 @@
   "settings.general.language": "Language",
   "settings.general.hotkey": "Hotkey",
   "settings.general.hotkeyLabel": "Global Hotkey",
+  "settings.general.cancelHotkeyLabel": "Cancel processing hotkey",
   "settings.api.whisperTitle": "Whisper (Transcription)",
   "settings.api.provider": "Provider",
   "settings.api.apiKey": "API Key",
@@ -76,6 +80,10 @@
   "settings.enrichments.delete": "Delete",
   "settings.enrichments.empty": "No enrichments yet.",
   "settings.enrichments.newName": "New enrichment",
+  "settings.keywords.title": "Keywords",
+  "settings.keywords.description": "Prompt for LLM-based keyword extraction.",
+  "settings.keywords.prompt": "Keyword prompt",
+  "settings.keywords.reset": "Reset to defaults",
   "theme.system": "System",
   "theme.light": "Light",
   "theme.dark": "Dark",
@@ -95,10 +103,11 @@
   "enrichment.tasks": "Tasks",
   "enrichment.meeting": "Meeting Notes",
   "enrichment.email": "Email Draft",
-  "enrichment.prompt.smart": "Create smart notes with:\\n- Short summary\\n- Decisions\\n- Next steps",
-  "enrichment.prompt.tasks": "Extract all action items and tasks as a short bullet list. Keep each item concise.",
-  "enrichment.prompt.meeting": "Create well-structured meeting notes:\\n- Summary\\n- Key points\\n- Decisions\\n- Action items",
-  "enrichment.prompt.email": "Draft a concise professional email based on the transcript. Include a subject line."
+  "enrichment.prompt.smart": "Create smart notes in Markdown with clear section headings:\\n- Summary (3-5 bullets)\\n- Decisions\\n- Next steps\\nRules:\\n- Use only information from the transcript.\\n- No inventions, no filler.\\n- Keep each bullet short.",
+  "enrichment.prompt.tasks": "Extract all action items as a list.\\nRules:\\n- One task per bullet.\\n- Include owner/date/status if mentioned.\\n- No duplicates, no extra context.",
+  "enrichment.prompt.meeting": "Create structured meeting notes in Markdown:\\n- Summary\\n- Key points\\n- Decisions\\n- Action items (with owner/date if mentioned)\\n- Open questions\\nRules:\\n- Use only transcript facts.\\n- Keep it concise.",
+  "enrichment.prompt.email": "Draft a short professional email based on the transcript.\\nStructure:\\n- Subject\\n- Greeting\\n- 3-6 sentences summary + next steps\\n- Closing\\nRules:\\n- Do not invent facts.",
+  "keywords.defaultPrompt": "System / Instruction Prompt\\n\\nYou extract keywords from spoken language.\\n\\nRules:\\n\\nReturn only a valid JSON array (no explanation, no Markdown).\\n\\nEach keyword is a single string without line breaks.\\n\\nNormalize:\\n- no punctuation\\n- no filler words (e.g. \"yeah\", \"well\", \"today\", \"then\", \"still\")\\n- no duplicates\\n- prefer nouns or fixed noun phrases\\n- no partial words or truncated tokens\\n- max 3 words per keyword\\n- 4-6 keywords\\n- order: most important -> less important\\n\\nExample:\\nText:\\n\"Today we have pizza and a green salad.\"\\n\\nOutput:\\n[\"Pizza\",\"green salad\"]\\n\\nText:\\n{{TRANSCRIPT}}"
   ,
   "common.untitled": "Untitled"
   ,
@@ -133,7 +142,8 @@
   "errors.audioBlobMissingDetails": "Audio blob not found. Try recording again or re-upload the file."
   ,
   "errors.transcriptionFailed": "Transcription failed.",
-  "errors.enrichmentFailed": "Enrichment failed."
+  "errors.enrichmentFailed": "Enrichment failed.",
+  "errors.processingCancelled": "Processing was canceled."
   ,
   "file.defaultName": "voice-note"
   ,
@@ -150,6 +160,7 @@
   ,
   "settings.enrichments.reset": "Reset to defaults",
   "settings.source.label": "Source",
+  "settings.source.api": "Local API",
   "settings.source.tauri": "Tauri",
   "settings.source.local": "LocalStorage",
   "settings.source.default": "Defaults"

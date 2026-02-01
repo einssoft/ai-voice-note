@@ -15,6 +15,9 @@
   "processing.title": "Elaborazione sessione",
   "processing.subtitle": "Tieni questa finestra aperta.",
   "processing.audioPreview": "Anteprima audio",
+  "processing.overlayTitle": "Elaborazione in corso…",
+  "processing.overlayHint": "Attendere · Annulla con {hotkey}",
+  "audio.unsupported": "Formato non supportato",
   "steps.recording": "Registrazione",
   "steps.transcribing": "Trascrizione",
   "steps.enriching": "Arricchimento",
@@ -56,6 +59,7 @@
   "settings.general.language": "Lingua",
   "settings.general.hotkey": "Scorciatoia",
   "settings.general.hotkeyLabel": "Scorciatoia globale",
+  "settings.general.cancelHotkeyLabel": "Scorciatoia annullamento",
   "settings.api.whisperTitle": "Whisper (Trascrizione)",
   "settings.api.provider": "Provider",
   "settings.api.apiKey": "API Key",
@@ -76,6 +80,10 @@
   "settings.enrichments.delete": "Elimina",
   "settings.enrichments.empty": "Nessun arricchimento al momento.",
   "settings.enrichments.newName": "Nuovo arricchimento",
+  "settings.keywords.title": "Parole chiave",
+  "settings.keywords.description": "Prompt per l’estrazione di parole chiave tramite LLM.",
+  "settings.keywords.prompt": "Prompt parole chiave",
+  "settings.keywords.reset": "Ripristina predefiniti",
   "theme.system": "Sistema",
   "theme.light": "Chiaro",
   "theme.dark": "Scuro",
@@ -95,10 +103,11 @@
   "enrichment.tasks": "Attività",
   "enrichment.meeting": "Note riunione",
   "enrichment.email": "Bozza email",
-  "enrichment.prompt.smart": "Crea note intelligenti con:\\n- Breve sintesi\\n- Decisioni\\n- Prossimi passi",
-  "enrichment.prompt.tasks": "Estrai tutte le attività e i to‑do come elenco conciso.",
-  "enrichment.prompt.meeting": "Crea note di riunione strutturate:\\n- Sintesi\\n- Punti chiave\\n- Decisioni\\n- Azioni",
-  "enrichment.prompt.email": "Redigi un’e‑mail professionale concisa basata sulla trascrizione. Includi un oggetto."
+  "enrichment.prompt.smart": "Crea note intelligenti in Markdown con intestazioni chiare:\\n- Sintesi (3-5 punti)\\n- Decisioni\\n- Prossimi passi\\nRegole:\\n- Usa solo informazioni dalla trascrizione.\\n- Nessuna invenzione, nessun riempitivo.\\n- Mantieni ogni punto breve.",
+  "enrichment.prompt.tasks": "Estrai tutte le attività come elenco.\\nRegole:\\n- Una attività per punto.\\n- Includi responsabile/data/stato se menzionati.\\n- Niente duplicati, niente contesto extra.",
+  "enrichment.prompt.meeting": "Crea note di riunione strutturate in Markdown:\\n- Sintesi\\n- Punti chiave\\n- Decisioni\\n- Attività (con responsabile/data se menzionati)\\n- Questioni aperte\\nRegole:\\n- Usa solo fatti dalla trascrizione.\\n- Sii conciso.",
+  "enrichment.prompt.email": "Redigi un’e‑mail professionale breve basata sulla trascrizione.\\nStruttura:\\n- Oggetto\\n- Saluto\\n- 3-6 frasi di sintesi + prossimi passi\\n- Chiusura\\nRegole:\\n- Non inventare fatti.",
+  "keywords.defaultPrompt": "System / Instruction Prompt\\n\\nEstrai parole chiave dal linguaggio parlato.\\n\\nRegole:\\n\\nRestituisci solo un array JSON valido (nessuna spiegazione, nessun Markdown).\\n\\nOgni parola chiave è una singola stringa senza interruzioni di riga.\\n\\nNormalizza:\\n- niente punteggiatura\\n- niente parole riempitive (es. \"sì\", \"cosa\", \"c’è\", \"oggi\", \"allora\", \"ancora\")\\n- niente duplicati\\n- preferisci sostantivi o sintagmi nominali fissi\\n- niente parole parziali o token troncati\\n- max 3 parole per parola chiave\\n- 4-6 parole chiave\\n- ordine: più importante -> meno importante\\n\\nEsempio:\\nTesto:\\n\"Oggi c’è pizza e un’insalata verde.\"\\n\\nOutput:\\n[\"Pizza\",\"insalata verde\"]\\n\\nTesto:\\n{{TRANSCRIPT}}"
   ,
   "common.untitled": "Senza titolo"
   ,
@@ -133,7 +142,8 @@
   "errors.audioBlobMissingDetails": "Audio non trovato. Registra di nuovo o ricarica il file."
   ,
   "errors.transcriptionFailed": "Trascrizione non riuscita.",
-  "errors.enrichmentFailed": "Arricchimento non riuscito."
+  "errors.enrichmentFailed": "Arricchimento non riuscito.",
+  "errors.processingCancelled": "Elaborazione annullata."
   ,
   "file.defaultName": "voice-note"
   ,
@@ -150,6 +160,7 @@
   ,
   "settings.enrichments.reset": "Ripristina predefiniti",
   "settings.source.label": "Origine",
+  "settings.source.api": "API locale",
   "settings.source.tauri": "Tauri",
   "settings.source.local": "LocalStorage",
   "settings.source.default": "Predefiniti"

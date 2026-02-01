@@ -33,6 +33,11 @@ export function getDefaultEnrichments(locale: Locale = "de"): EnrichmentTemplate
   ];
 }
 
+export function getDefaultKeywordsPrompt(locale: Locale = "de"): string {
+  const messages = getMessages(locale);
+  return t(messages, "keywords.defaultPrompt");
+}
+
 const baseTranscript =
   "Heute haben wir die wichtigsten Punkte zum Projektstatus besprochen. Offene Fragen betreffen die Timeline, das Budget und die Abhaengigkeiten im Design. Naechste Schritte sind eine Review-Runde am Mittwoch und das Sammeln der Kundenfeedbacks.";
 

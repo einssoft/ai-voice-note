@@ -15,6 +15,9 @@
   "processing.title": "Traitement de la session",
   "processing.subtitle": "Veuillez garder cette fenêtre ouverte.",
   "processing.audioPreview": "Aperçu audio",
+  "processing.overlayTitle": "Traitement en cours…",
+  "processing.overlayHint": "Veuillez patienter · Annuler avec {hotkey}",
+  "audio.unsupported": "Format non pris en charge",
   "steps.recording": "Enregistrement",
   "steps.transcribing": "Transcription",
   "steps.enriching": "Enrichissement",
@@ -56,6 +59,7 @@
   "settings.general.language": "Langue",
   "settings.general.hotkey": "Raccourci",
   "settings.general.hotkeyLabel": "Raccourci global",
+  "settings.general.cancelHotkeyLabel": "Raccourci d’annulation",
   "settings.api.whisperTitle": "Whisper (Transcription)",
   "settings.api.provider": "Fournisseur",
   "settings.api.apiKey": "Clé API",
@@ -76,6 +80,10 @@
   "settings.enrichments.delete": "Supprimer",
   "settings.enrichments.empty": "Aucun enrichissement pour le moment.",
   "settings.enrichments.newName": "Nouvel enrichissement",
+  "settings.keywords.title": "Mots-clés",
+  "settings.keywords.description": "Prompt pour l’extraction de mots-clés par LLM.",
+  "settings.keywords.prompt": "Prompt de mots-clés",
+  "settings.keywords.reset": "Réinitialiser par défaut",
   "theme.system": "Système",
   "theme.light": "Clair",
   "theme.dark": "Sombre",
@@ -95,10 +103,11 @@
   "enrichment.tasks": "Tâches",
   "enrichment.meeting": "Notes de réunion",
   "enrichment.email": "Brouillon d’e‑mail",
-  "enrichment.prompt.smart": "Crée des notes intelligentes avec :\\n- Résumé court\\n- Décisions\\n- Prochaines étapes",
-  "enrichment.prompt.tasks": "Extrait toutes les actions et tâches sous forme de liste concise.",
-  "enrichment.prompt.meeting": "Crée des notes de réunion structurées :\\n- Résumé\\n- Points clés\\n- Décisions\\n- Actions",
-  "enrichment.prompt.email": "Rédige un e‑mail professionnel concis basé sur la transcription. Inclure un objet."
+  "enrichment.prompt.smart": "Crée des notes intelligentes en Markdown avec des titres de section clairs :\\n- Résumé (3-5 puces)\\n- Décisions\\n- Prochaines étapes\\nRègles :\\n- Utilise uniquement les informations de la transcription.\\n- Pas d’inventions, pas de remplissage.\\n- Garde chaque puce courte.",
+  "enrichment.prompt.tasks": "Extrait toutes les actions sous forme de liste.\\nRègles :\\n- Une tâche par puce.\\n- Inclure responsable/date/statut si mentionné.\\n- Pas de doublons, pas de contexte supplémentaire.",
+  "enrichment.prompt.meeting": "Crée des notes de réunion structurées en Markdown :\\n- Résumé\\n- Points clés\\n- Décisions\\n- Actions (avec responsable/date si mentionné)\\n- Questions ouvertes\\nRègles :\\n- Utilise uniquement les faits de la transcription.\\n- Reste concis.",
+  "enrichment.prompt.email": "Rédige un e‑mail professionnel court basé sur la transcription.\\nStructure :\\n- Objet\\n- Salutation\\n- 3-6 phrases de synthèse + prochaines étapes\\n- Conclusion\\nRègles :\\n- N’invente pas de faits.",
+  "keywords.defaultPrompt": "System / Instruction Prompt\\n\\nTu extrais des mots-clés à partir de la langue parlée.\\n\\nRègles :\\n\\nRetourne uniquement un tableau JSON valide (aucune explication, pas de Markdown).\\n\\nChaque mot-clé est une chaîne unique sans sauts de ligne.\\n\\nNormalise :\\n- pas de ponctuation\\n- pas de mots de remplissage (p. ex. \"oui\", \"quoi\", \"il y a\", \"aujourd’hui\", \"alors\", \"encore\")\\n- pas de doublons\\n- privilégier les noms ou syntagmes nominaux fixes\\n- pas de mots tronqués ni fragments\\n- max 3 mots par mot-clé\\n- 4-6 mots-clés\\n- ordre : plus important -> moins important\\n\\nExemple :\\nTexte :\\n\"Aujourd’hui, il y a de la pizza et une salade verte.\"\\n\\nSortie :\\n[\"Pizza\",\"salade verte\"]\\n\\nTexte :\\n{{TRANSCRIPT}}"
   ,
   "common.untitled": "Sans titre"
   ,
@@ -133,7 +142,8 @@
   "errors.audioBlobMissingDetails": "Audio introuvable. Réenregistrez ou rechargez le fichier."
   ,
   "errors.transcriptionFailed": "Transcription échouée.",
-  "errors.enrichmentFailed": "Enrichissement échoué."
+  "errors.enrichmentFailed": "Enrichissement échoué.",
+  "errors.processingCancelled": "Traitement annulé."
   ,
   "file.defaultName": "voice-note"
   ,
@@ -150,6 +160,7 @@
   ,
   "settings.enrichments.reset": "Réinitialiser par défaut",
   "settings.source.label": "Source",
+  "settings.source.api": "API locale",
   "settings.source.tauri": "Tauri",
   "settings.source.local": "LocalStorage",
   "settings.source.default": "Par défaut"

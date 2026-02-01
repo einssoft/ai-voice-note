@@ -6,6 +6,9 @@ import { getMessages, t as translate } from "@/lib/i18n";
 const OPENAI_BASE_URL = "https://api.openai.com";
 const OPENAI_WHISPER_MODEL = "whisper-1";
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+const KEYWORD_LIMIT = 6;
+const DEFAULT_KEYWORD_PROMPT =
+  "Extract 4-6 keywords as a JSON array. Prefer nouns or noun phrases. No filler words, no duplicates, max 3 words each.";
 
 const STOPWORDS = new Set([
   "und",
@@ -120,26 +123,88 @@ function extractResponseText(payload: any) {
 function getModePrompt(mode: string) {
   switch (mode) {
     case "tasks":
-      return "Extract all action items and tasks as a short bullet list. Keep each item concise.";
+      return [
+        "Extract all action items as a list.",
+        "Rules:",
+        "- One task per bullet.",
+        "- Include owner/date/status if mentioned.",
+        "- No duplicates, no extra context.",
+      ].join("\n");
     case "meeting":
       return [
-        "Create well-structured meeting notes:",
+        "Create structured meeting notes in Markdown:",
         "- Summary",
         "- Key points",
         "- Decisions",
-        "- Action items",
+        "- Action items (with owner/date if mentioned)",
+        "- Open questions",
+        "Rules:",
+        "- Use only transcript facts.",
+        "- Keep it concise.",
       ].join("\n");
     case "email":
-      return "Draft a concise professional email based on the transcript. Include a subject line.";
+      return [
+        "Draft a short professional email based on the transcript.",
+        "Structure:",
+        "- Subject",
+        "- Greeting",
+        "- 3-6 sentences summary + next steps",
+        "- Closing",
+        "Rules:",
+        "- Do not invent facts.",
+      ].join("\n");
     case "smart":
     default:
       return [
-        "Create smart notes with:",
-        "- Short summary",
+        "Create smart notes in Markdown with clear section headings:",
+        "- Summary (3-5 bullets)",
         "- Decisions",
         "- Next steps",
+        "Rules:",
+        "- Use only information from the transcript.",
+        "- No inventions, no filler.",
+        "- Keep each bullet short.",
       ].join("\n");
   }
+}
+
+function normalizeKeywords(list: string[], limit = KEYWORD_LIMIT) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of list) {
+    const cleaned = raw
+      .replace(/^[\s\-*•]+/g, "")
+      .replace(/^[\"'“”‘’]+|[\"'“”‘’]+$/g, "")
+      .trim();
+    if (!cleaned) continue;
+    const key = cleaned.toLowerCase();
+    if (seen.has(key)) continue;
+    if (!cleaned.includes(" ") && STOPWORDS.has(key)) continue;
+    seen.add(key);
+    result.push(cleaned);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+function parseKeywords(text: string, limit = KEYWORD_LIMIT) {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return normalizeKeywords(parsed.map((item) => String(item)), limit);
+      }
+    } catch {
+      // fall through to heuristic parsing
+    }
+  }
+  const candidates = trimmed
+    .split(/[\n,;]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return normalizeKeywords(candidates, limit);
 }
 
 export function extractKeywords(text: string, limit = 4) {
@@ -156,7 +221,11 @@ export function extractKeywords(text: string, limit = 4) {
     .map(([token]) => token);
 }
 
-export async function transcribeAudio(blob: Blob, settings: Settings) {
+export async function transcribeAudio(
+  blob: Blob,
+  settings: Settings,
+  signal?: AbortSignal
+) {
   const messages = getMessages(settings.general.language);
   if (settings.privacy.offline) {
     throw new Error(translate(messages, "errors.offlineMode"));
@@ -188,6 +257,7 @@ export async function transcribeAudio(blob: Blob, settings: Settings) {
     headers: {
       Authorization: `Bearer ${settings.api.whisper.apiKey}`,
     },
+    signal,
     body: formData,
   });
 
@@ -207,7 +277,55 @@ export async function transcribeAudio(blob: Blob, settings: Settings) {
   return text.trim();
 }
 
-export async function enrichTranscript(transcript: string, prompt: string, settings: Settings) {
+async function generateKeywords(
+  transcript: string,
+  prompt: string,
+  settings: Settings,
+  signal?: AbortSignal
+) {
+  const messages = getMessages(settings.general.language);
+  const fallbackPrompt = translate(messages, "keywords.defaultPrompt");
+  const endpoint = resolveEndpoint(settings.api.llm.baseUrl, "/v1/responses");
+  const systemPrompt =
+    (prompt?.trim() || fallbackPrompt || DEFAULT_KEYWORD_PROMPT) +
+    "\n\nReturn only a JSON array of strings. Respond in the same language as the transcript.";
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${settings.api.llm.apiKey}`,
+      "Content-Type": "application/json",
+    },
+    signal,
+    body: JSON.stringify({
+      model: settings.api.llm.model || "gpt-4o-mini",
+      input: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: transcript },
+      ],
+      temperature: 0.2,
+      max_output_tokens: 200,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  const payload = await response.json();
+  const raw = extractResponseText(payload);
+  const keywords = parseKeywords(raw, KEYWORD_LIMIT);
+  if (!keywords.length) {
+    throw new Error("Keyword extraction returned no keywords.");
+  }
+  return keywords;
+}
+
+export async function enrichTranscript(
+  transcript: string,
+  prompt: string,
+  settings: Settings,
+  signal?: AbortSignal
+) {
   const messages = getMessages(settings.general.language);
   if (!transcript.trim()) {
     throw new Error(translate(messages, "errors.noTranscript"));
@@ -233,6 +351,7 @@ export async function enrichTranscript(transcript: string, prompt: string, setti
       Authorization: `Bearer ${settings.api.llm.apiKey}`,
       "Content-Type": "application/json",
     },
+    signal,
     body: JSON.stringify({
       model: settings.api.llm.model || "gpt-4o-mini",
       input: [
@@ -256,6 +375,12 @@ export async function enrichTranscript(transcript: string, prompt: string, setti
 
   return {
     enriched,
-    keywords: extractKeywords(enriched),
+    keywords: await (async () => {
+      try {
+        return await generateKeywords(transcript, settings.keywordsPrompt, settings, signal);
+      } catch {
+        return extractKeywords(transcript, KEYWORD_LIMIT);
+      }
+    })(),
   };
 }

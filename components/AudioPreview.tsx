@@ -16,14 +16,18 @@ function formatTime(value: number) {
 
 type AudioPreviewProps = {
   src: string;
+  mime?: string;
+  fallbackDurationSec?: number;
 };
 
-export function AudioPreview({ src }: AudioPreviewProps) {
+export function AudioPreview({ src, mime, fallbackDurationSec = 0 }: AudioPreviewProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [canPlay, setCanPlay] = useState(true);
   const fixingDurationRef = useRef(false);
+  const fixTimeoutRef = useRef<number | null>(null);
   const {
     state: { settings },
   } = useAppStore();
@@ -43,6 +47,12 @@ export function AudioPreview({ src }: AudioPreviewProps) {
         setDuration(audio.duration);
         return;
       }
+      if (fallbackDurationSec > 0) {
+        setDuration(fallbackDurationSec);
+      }
+      const type = (mime || "").split(";")[0].trim();
+      const maybeWebm = type === "audio/webm" || type === "audio/ogg" || src.includes(".webm");
+      if (!maybeWebm) return;
       // Fix WebM duration in Safari/WebKit: force duration calculation.
       fixingDurationRef.current = true;
       const onTimeUpdate = () => {
@@ -55,29 +65,63 @@ export function AudioPreview({ src }: AudioPreviewProps) {
         }
       };
       audio.addEventListener("timeupdate", onTimeUpdate);
-      audio.currentTime = 1e101;
+      try {
+        audio.currentTime = 1e101;
+      } catch {
+        // ignore seek errors
+      }
+      if (fixTimeoutRef.current) window.clearTimeout(fixTimeoutRef.current);
+      fixTimeoutRef.current = window.setTimeout(() => {
+        fixingDurationRef.current = false;
+        audio.removeEventListener("timeupdate", onTimeUpdate);
+      }, 1200);
     };
 
     const handleTime = () => {
-      if (fixingDurationRef.current) return;
-      setCurrentTime(audio.currentTime);
+      if (fixingDurationRef.current && !(Number.isFinite(audio.duration) && audio.duration > 0)) {
+        return;
+      }
+      if (Number.isFinite(audio.currentTime)) {
+        setCurrentTime(audio.currentTime);
+      }
     };
     const handleEnd = () => setIsPlaying(false);
+    const handleError = () => {
+      setIsPlaying(false);
+      setCanPlay(false);
+    };
+
+    if (mime && audio.canPlayType) {
+      const base = mime.split(";")[0].trim();
+      if (base) {
+        const support = audio.canPlayType(base);
+        if (support === "probably" || support === "maybe") {
+          setCanPlay(true);
+        }
+      }
+    }
 
     audio.addEventListener("loadedmetadata", handleLoaded);
     audio.addEventListener("timeupdate", handleTime);
     audio.addEventListener("ended", handleEnd);
+    audio.addEventListener("error", handleError);
 
     return () => {
       audio.removeEventListener("loadedmetadata", handleLoaded);
       audio.removeEventListener("timeupdate", handleTime);
       audio.removeEventListener("ended", handleEnd);
+      audio.removeEventListener("error", handleError);
+      if (fixTimeoutRef.current) {
+        window.clearTimeout(fixTimeoutRef.current);
+        fixTimeoutRef.current = null;
+      }
     };
-  }, [src]);
+  }, [src, mime, fallbackDurationSec]);
 
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
+    if (!canPlay) return;
     if (audio.paused) {
       try {
         await audio.play();
@@ -94,18 +138,23 @@ export function AudioPreview({ src }: AudioPreviewProps) {
   const onSeek = (value: number) => {
     const audio = audioRef.current;
     if (!audio) return;
+    if (!canPlay) return;
     audio.currentTime = value;
     setCurrentTime(value);
   };
 
+  const effectiveDuration = duration > 0 ? duration : fallbackDurationSec;
+  const maxRange = Math.max(effectiveDuration || 0, currentTime || 0);
+
   return (
     <div className="flex items-center gap-3 rounded-xl bg-muted/70 px-3 py-2">
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={src} preload="metadata" crossOrigin="anonymous" />
       <Button
         variant="ghost"
         size="icon"
         onClick={toggle}
         aria-label={isPlaying ? t("aria.pause") : t("aria.play")}
+        disabled={!canPlay}
       >
         {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       </Button>
@@ -113,18 +162,23 @@ export function AudioPreview({ src }: AudioPreviewProps) {
         <input
           type="range"
           min={0}
-          max={duration || 0}
+          max={maxRange}
           step={0.01}
-          value={Math.min(currentTime, duration || currentTime)}
+          value={Math.min(currentTime, maxRange || currentTime)}
           onChange={(event) => onSeek(Number(event.target.value))}
           className="h-2 w-full accent-primary"
           aria-label={t("aria.seekAudio")}
+          disabled={!canPlay}
         />
         <span className="text-xs text-muted-foreground">
-          {formatTime(currentTime)} / {formatTime(duration)}
+          {formatTime(currentTime)} / {formatTime(effectiveDuration)}
         </span>
       </div>
-      <Volume2 className="h-4 w-4 text-muted-foreground" />
+      {canPlay ? (
+        <Volume2 className="h-4 w-4 text-muted-foreground" />
+      ) : (
+        <span className="text-xs text-muted-foreground">{t("audio.unsupported")}</span>
+      )}
     </div>
   );
 }

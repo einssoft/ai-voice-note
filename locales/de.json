@@ -15,6 +15,9 @@
   "processing.title": "Session wird verarbeitet",
   "processing.subtitle": "Bitte dieses Fenster geöffnet lassen.",
   "processing.audioPreview": "Audio-Vorschau",
+  "processing.overlayTitle": "Verarbeitung läuft…",
+  "processing.overlayHint": "Bitte warten · Abbrechen mit {hotkey}",
+  "audio.unsupported": "Format nicht unterstützt",
   "steps.recording": "Aufnahme",
   "steps.transcribing": "Transkribieren",
   "steps.enriching": "Anreichern",
@@ -55,7 +58,8 @@
   "settings.general.theme": "Theme",
   "settings.general.language": "Sprache",
   "settings.general.hotkey": "Hotkey",
-  "settings.general.hotkeyLabel": "Globaler Hotkey",
+  "settings.general.hotkeyLabel": "Hotkey fuer Aufnahme",
+  "settings.general.cancelHotkeyLabel": "Hotkey zum Abbrechen",
   "settings.api.whisperTitle": "Whisper (Transkription)",
   "settings.api.provider": "Provider",
   "settings.api.apiKey": "API Key",
@@ -76,6 +80,10 @@
   "settings.enrichments.delete": "Löschen",
   "settings.enrichments.empty": "Noch keine Enrichments.",
   "settings.enrichments.newName": "Neues Enrichment",
+  "settings.keywords.title": "Keywords",
+  "settings.keywords.description": "Prompt für die Keyword-Extraktion per LLM.",
+  "settings.keywords.prompt": "Keyword-Prompt",
+  "settings.keywords.reset": "Auf Standard zurücksetzen",
   "theme.system": "System",
   "theme.light": "Hell",
   "theme.dark": "Dunkel",
@@ -95,10 +103,11 @@
   "enrichment.tasks": "Aufgabenliste",
   "enrichment.meeting": "Meeting-Notizen",
   "enrichment.email": "E-Mail Entwurf",
-  "enrichment.prompt.smart": "Erstelle Smart Notes mit:\\n- Kurze Zusammenfassung\\n- Entscheidungen\\n- Naechste Schritte",
-  "enrichment.prompt.tasks": "Extrahiere alle Aufgaben und To-dos als kurze Liste. Halte jeden Punkt knapp.",
-  "enrichment.prompt.meeting": "Erstelle strukturierte Meeting-Notizen:\\n- Zusammenfassung\\n- Kernthemen\\n- Entscheidungen\\n- Action Items",
-  "enrichment.prompt.email": "Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript. Fuege eine Betreffzeile hinzu."
+  "enrichment.prompt.smart": "Erstelle Smart Notes in Markdown mit klaren Abschnittsueberschriften:\\n- Kurzfassung (3-5 Stichpunkte)\\n- Entscheidungen\\n- Naechste Schritte\\nRegeln:\\n- Nur Informationen aus dem Transkript.\\n- Keine Erfindungen, keine Floskeln.\\n- Halte jeden Punkt kurz.",
+  "enrichment.prompt.tasks": "Extrahiere alle Aufgaben/To-dos als Liste.\\nRegeln:\\n- Eine Aufgabe pro Bullet.\\n- Wenn genannt: Owner, Termin, Status.\\n- Keine Duplikate, kein Kontexttext.",
+  "enrichment.prompt.meeting": "Erstelle strukturierte Meeting-Notizen in Markdown:\\n- Zusammenfassung\\n- Kernthemen\\n- Entscheidungen\\n- Action Items (mit Owner/Termin falls genannt)\\n- Offene Punkte\\nRegeln:\\n- Nur Informationen aus dem Transkript.\\n- Halte es knapp und klar.",
+  "enrichment.prompt.email": "Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript.\\nStruktur:\\n- Betreff\\n- Begruessung\\n- 3-6 Saetze Zusammenfassung + naechste Schritte\\n- Abschluss\\nRegeln:\\n- Keine erfundenen Fakten.",
+  "keywords.defaultPrompt": "System / Instruction Prompt\\n\\nDu extrahierst Keywords aus der gesprochenen Sprache.\\n\\nRegeln:\\n\\nGib ausschliesslich ein valides JSON-Array zurueck (keine Erklaerung, kein Markdown).\\n\\nJedes Keyword ist ein einzelner String ohne Zeilenumbrueche.\\n\\nNormalisiere:\\n- keine Satzzeichen\\n- keine Fuellwoerter (z. B. \"ja\", \"was\", \"gibt es\", \"heute\", \"dann\", \"noch\")\\n- keine Dubletten oder Wiederholungen\\n- Bevorzuge Substantive oder feste Nominalphrasen\\n- Keine Teilwoerter oder abgeschnittene Tokens\\n- Maximal 3 Woerter pro Keyword\\n- 4-6 Keywords\\n- Reihenfolge: wichtig -> weniger wichtig\\n\\nBeispiel:\\nText:\\n\"Heute gibt es Pizza und einen gruenen Salat.\"\\n\\nAusgabe:\\n[\"Pizza\",\"gruener Salat\"]\\n\\nText:\\n{{TRANSKRIPT}}"
   ,
   "common.untitled": "Ohne Titel"
   ,
@@ -133,7 +142,8 @@
   "errors.audioBlobMissingDetails": "Audio-Daten nicht gefunden. Bitte erneut aufnehmen oder Datei neu hochladen."
   ,
   "errors.transcriptionFailed": "Transkription fehlgeschlagen.",
-  "errors.enrichmentFailed": "Anreicherung fehlgeschlagen."
+  "errors.enrichmentFailed": "Anreicherung fehlgeschlagen.",
+  "errors.processingCancelled": "Verarbeitung abgebrochen."
   ,
   "file.defaultName": "voice-note"
   ,
@@ -150,6 +160,7 @@
   ,
   "settings.enrichments.reset": "Auf Standard zurücksetzen",
   "settings.source.label": "Quelle",
+  "settings.source.api": "Lokale API",
   "settings.source.tauri": "Tauri",
   "settings.source.local": "LocalStorage",
   "settings.source.default": "Standard"

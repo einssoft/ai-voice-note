@@ -15,7 +15,7 @@ export async function saveTextFile(
   if (isTauri()) {
     try {
       const { save } = await import("@tauri-apps/plugin-dialog");
-      const { writeFile } = await import("@tauri-apps/plugin-fs");
+      const { writeTextFile } = await import("@tauri-apps/plugin-fs");
       const path = await save({
         defaultPath: suggestedName,
         filters: [
@@ -24,7 +24,7 @@ export async function saveTextFile(
         ],
       });
       if (!path) return { ok: false, canceled: true };
-      await writeFile({ path, contents: content });
+      await writeTextFile(path, content);
       return { ok: true, path };
     } catch (error) {
       return { ok: false, message: error instanceof Error ? error.message : "Save failed." };
