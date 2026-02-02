@@ -1,6 +1,13 @@
 # ai-voice-note
 
-Desktop-Anwendung für Sprachaufnahmen mit automatischer Transkription und KI-gestützter Anreicherung. Per Hotkey aktivierbar, läuft lokal oder nutzt Cloud-APIs nach Wahl.
+<p align="center">
+  <img src="src-tauri/icons/icon.png" alt="ai-voice-note Logo" width="128" />
+</p>
+
+**Sprachnotizen aufnehmen. KI-gestützt anreichern. Direkt weiterverarbeiten.**
+
+Vom gesprochenen Wort zum strukturierten Ergebnis – in einer Pipeline:
+Aufnahme → Transkription → KI-Enrichment → Aktion. Enrichments sind verkettbar: ein Meeting wird zum Sprint-Backlog, zur kritischen Analyse, zur Management-Mail – und per Webhook direkt versendet. Per Hotkey aktivierbar, komplett lokal mit Whisper.cpp + Ollama oder via Cloud-APIs (OpenAI, Gemini, Claude, Grok). Desktop-App für macOS, Windows und Linux.
 
 ## Kurzbeschreibung des Problems
 
