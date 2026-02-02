@@ -57,12 +57,12 @@ function pickKeyByProvider<T extends { id: string; provider: string }>(
 
 export function AppShell() {
   const {
-    state: { settings, sessions, activeSessionId, settingsSource },
+    state: { settings, sessions, activeSessionId, settingsSource, statusMessage },
     actions: { toggleTheme, startRecording, stopRecording, cancelProcessing, updateSettings },
   } = useAppStore();
 
   const SIDEBAR_MIN = 240;
-  const SIDEBAR_MAX = 420;
+  const SIDEBAR_MAX = typeof window !== "undefined" ? Math.floor(window.innerWidth / 2) : 600;
   const SIDEBAR_DEFAULT = 300;
   const SIDEBAR_STORAGE_KEY = "ai-voice-note:sidebar-width";
 
@@ -466,10 +466,17 @@ export function AppShell() {
           </main>
         </div>
         <div className="border-t border-border bg-muted/20 px-4 py-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {statusItems.map((item) => (
-              <StatusBadge key={item.key} ok={item.ok} label={item.label} statusKey={item.key} />
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {statusItems.map((item) => (
+                <StatusBadge key={item.key} ok={item.ok} label={item.label} statusKey={item.key} />
+              ))}
+            </div>
+            {statusMessage && (
+              <span className={`text-xs ${statusMessage.tone === "success" ? "text-emerald-600" : "text-destructive"}`}>
+                {statusMessage.text}
+              </span>
+            )}
           </div>
         </div>
       </div>

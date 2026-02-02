@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "ai voice note",
+  "productName": "Ai Voice Note",
   "version": "0.1.0",
   "identifier": "com.voiceintelligence.app",
   "build": {
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "ai voice note",
+        "title": "Ai Voice Note",
         "width": 1200,
         "height": 800,
         "minWidth": 980,

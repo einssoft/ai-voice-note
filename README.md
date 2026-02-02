@@ -87,6 +87,7 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
 2. **Transkription** (`lib/processing.ts`)
    - **Lokal**: whisper.cpp via Tauri Command mit FFmpeg-Konvertierung
    - **Remote**: OpenAI Whisper API oder Custom Endpoints
+   - **Transcript Upload**: Direkter Upload von Text/Markdown-Dateien (überspringt Whisper-Transkription)
    - Spracherkennung: Auto-Detection oder manuell wählbar
    - Max. Dateigröße: 25MB
    - Fehlerbehandlung mit Retry-Logik
@@ -159,10 +160,13 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
 - Automatische Format-Auswahl (WebM/Opus bevorzugt)
 - Echo-Cancellation, Noise-Suppression, Auto-Gain Control
 - Mikrofonberechtigungs-Handling
+- **Audio-Upload**: Unterstützung für bestehende Audio-Dateien
+- **Transcript-Upload**: Direkter Upload von Text/Markdown-Dateien (überspringt Transkription)
 
 ✅ **Transkription**
 - **Lokal**: whisper.cpp Integration mit Modell-Download
 - **Remote**: OpenAI Whisper API, Custom Endpoints
+- **Transcript-Import**: Text/Markdown-Dateien hochladen und direkt zum Enrichment springen
 - Sprachauswahl: Auto-Detection oder manuell (20+ Sprachen)
 - FFmpeg-Konvertierung für Kompatibilität
 - Modell-Download via Setup-Wizard
@@ -208,7 +212,10 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
 - **Session Cards**: Schneller Überblick (Titel, Dauer, Keywords, Preview)
 - **Status Feedback**: Idle → Recording → Processing → Done/Error
 - **Error Handling**: Lokalisierte Fehlermeldungen mit Details (Stage, Provider, Endpoint)
-- **Copy/Save Actions**: Schneller Export von Ergebnissen
+- **Kontextabhängige Copy/Save Actions**:
+  - **Enriched Tab**: Kopiert/Speichert die KI-Anreicherung
+  - **Transcript Tab**: Kopiert/Speichert die Transkription
+  - **Metadata Tab**: Kopiert/Speichert vollständiges Dokument (Metadaten + Anreicherung + Transkript)
 
 ## Setup-Anleitung
 
@@ -268,6 +275,32 @@ Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
    - Für **Lokal**: Setup-Wizard durchlaufen (FFmpeg, Whisper, Ollama)
 4. **Hotkey testen**: `Ctrl+Shift+R` (oder konfigurierte Kombination)
 5. **Erste Aufnahme**: Mic-Button klicken oder Hotkey drücken, sprechen, stoppen
+
+### Nutzungsszenarien
+
+**Voice Recording & Transkription**
+1. Modus wählen (Smart Notes, Tasks, Meeting Notes, Email)
+2. Provider auswählen (Whisper/LLM)
+3. Aufnahme starten (Mic-Button oder Hotkey)
+4. Sprechen
+5. Aufnahme stoppen → Automatische Transkription & Anreicherung
+
+**Audio-Upload**
+1. "Audio hochladen" Button klicken
+2. Audio-Datei auswählen (MP3, WAV, M4A, etc.)
+3. Automatische Transkription & Anreicherung
+
+**Transcript-Import (Skip Whisper)**
+1. "Transkript hochladen" Button klicken
+2. Text- oder Markdown-Datei auswählen
+3. Direkter Sprung zur KI-Anreicherung (überspringt Transkription)
+4. Ideal für bereits transkribierte Texte oder Meeting-Notizen
+
+**Export-Workflows**
+- **Enriched Tab aktiv**: Copy/Save exportiert die KI-Anreicherung
+- **Transcript Tab aktiv**: Copy/Save exportiert die reine Transkription
+- **Metadata Tab aktiv**: Copy/Save exportiert vollständiges Dokument (Metadaten + Anreicherung + Transkript)
+- "Ordner öffnen" Button öffnet den Speicherort der letzten gespeicherten Datei
 
 ### Konfiguration
 
@@ -348,6 +381,9 @@ Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
 - Audio-Level Visualisierung direkt um Button herum
 - Klare Provider-Auswahl (Whisper/LLM) vor Recording
 - Modus-Auswahl (Smart Notes/Tasks/Meeting/Email) integriert
+- **Upload-Optionen**:
+  - Audio-Upload: Bestehende Audio-Dateien verarbeiten
+  - Transcript-Upload: Text/Markdown-Dateien direkt zum Enrichment senden (Skip Whisper)
 
 **Sessions als Cards**
 - Schneller Überblick: Titel, Dauer, Keywords, Timestamp
@@ -359,7 +395,12 @@ Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
 - **Enriched**: Strukturierte KI-Anreicherung (primärer Output)
 - **Transcript**: Reine Transkription (Fallback, Verifikation)
 - **Metadata**: Technische Details (Provider, Dauer, Keywords, Timestamps)
-- Copy/Save Buttons pro Tab für schnellen Export
+- **Kontextabhängige Copy/Save Buttons**:
+  - Buttons passen sich automatisch dem aktiven Tab an
+  - Enriched Tab → kopiert/speichert nur Enrichment
+  - Transcript Tab → kopiert/speichert nur Transkript
+  - Metadata Tab → kopiert/speichert vollständiges Dokument
+  - Intuitive UX: Copy/Save bezieht sich immer auf das aktuell Sichtbare
 
 **Settings Struktur**
 - **General**: Sprache, Theme, Hotkeys, Audio-Devices

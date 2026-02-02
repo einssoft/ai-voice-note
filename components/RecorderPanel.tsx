@@ -1,6 +1,6 @@
 "use client";
 
-import { FileAudio, Mic, StopCircle } from "lucide-react";
+import { FileAudio, FileText, Mic, StopCircle } from "lucide-react";
 import { useRef } from "react";
 
 import { Mode, EnrichmentTemplate } from "@/lib/store";
@@ -27,6 +27,7 @@ type RecorderPanelProps = {
   onStart: () => void | Promise<void>;
   onStop: () => void;
   onUpload: (file: File) => void | Promise<void>;
+  onUploadTranscript: (file: File) => void | Promise<void>;
 };
 
 export function RecorderPanel({
@@ -47,9 +48,11 @@ export function RecorderPanel({
   onStart,
   onStop,
   onUpload,
+  onUploadTranscript,
 }: RecorderPanelProps) {
   const isRecording = status === "recording";
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
+  const transcriptInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useI18n(language);
 
   return (
@@ -141,9 +144,9 @@ export function RecorderPanel({
           );
         })}
       </div>
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap gap-2">
         <input
-          ref={inputRef}
+          ref={audioInputRef}
           type="file"
           accept="audio/*"
           className="hidden"
@@ -155,13 +158,34 @@ export function RecorderPanel({
             event.currentTarget.value = "";
           }}
         />
+        <input
+          ref={transcriptInputRef}
+          type="file"
+          accept=".txt,.md,text/plain,text/markdown"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) {
+              onUploadTranscript(file);
+            }
+            event.currentTarget.value = "";
+          }}
+        />
         <Button
           variant="secondary"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => audioInputRef.current?.click()}
           disabled={isRecording}
         >
           <FileAudio className="h-4 w-4" />
           {t("recorder.upload")}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => transcriptInputRef.current?.click()}
+          disabled={isRecording}
+        >
+          <FileText className="h-4 w-4" />
+          {t("recorder.uploadTranscript")}
         </Button>
       </div>
     </div>

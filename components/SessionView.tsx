@@ -1,12 +1,12 @@
 "use client";
 
-import { Copy, FileText, FolderOpen, RefreshCcw } from "lucide-react";
+import { Copy, RefreshCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAppStore } from "@/lib/store";
 import { formatDateTime, formatDuration } from "@/lib/utils";
 import { useI18n, toIntlLocale } from "@/lib/i18n";
-import { saveTextFile, openAppFolder } from "@/lib/export";
+import { saveTextFile } from "@/lib/export";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -88,10 +88,6 @@ export function SessionView() {
   const [titleValue, setTitleValue] = useState(activeSession?.title ?? "");
   const [now, setNow] = useState(Date.now());
   const [activeTab, setActiveTab] = useState("enriched");
-  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(
-    null
-  );
-  const [lastSavePath, setLastSavePath] = useState<string | null>(null);
   const { t } = useI18n(settings.general.language);
   const locale = toIntlLocale(settings.general.language);
   const templates = settings.enrichments;
@@ -230,6 +226,7 @@ export function SessionView() {
         onStart={actions.startRecording}
         onStop={actions.stopRecording}
         onUpload={actions.uploadAudio}
+        onUploadTranscript={actions.uploadTranscript}
       />
     );
   }
@@ -254,50 +251,50 @@ export function SessionView() {
         onStart={actions.startRecording}
         onStop={actions.stopRecording}
         onUpload={actions.uploadAudio}
+        onUploadTranscript={actions.uploadTranscript}
       />
     );
   }
 
   const modeLabel = templates.find((option) => option.id === activeSession.mode)?.name ?? activeSession.mode;
 
-  const showFeedback = (message: string, tone: "success" | "error" = "success") => {
-    setFeedback({ message, tone });
-    window.setTimeout(() => setFeedback(null), 2000);
+  const modeLabelForFile = (modeLabel || "enrichment").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/_$/, "");
+
+  const getFullContent = () => {
+    const metadata = activeSession.metadata;
+    const sections = [
+      `# ${titleValue || t("common.untitled")}`,
+      "",
+      `**${t("metadata.created")}:** ${formatDateTime(activeSession.createdAt, locale)}  `,
+      `**${t("metadata.duration")}:** ${formatDuration(metadata.durationSec)}  `,
+      `**${t("metadata.mode")}:** ${modeLabel}  `,
+      `**${t("metadata.whisper")}:** ${metadata.whisperProvider}  `,
+      `**${t("metadata.llm")}:** ${metadata.llmProvider}  `,
+      `**${t("metadata.keywords")}:** ${metadata.keywords.join(", ") || "-"}  `,
+      "",
+      "---",
+      "",
+    ];
+
+    if (activeSession.enriched) {
+      sections.push(`## ${t("tabs.enriched")}`, "", activeSession.enriched, "", "---", "");
+    }
+
+    if (activeSession.transcript) {
+      sections.push(`## ${t("tabs.transcript")}`, "", activeSession.transcript);
+    }
+
+    return sections.join("\n");
   };
 
-  const getTabContent = (tab: string) => {
-    if (tab === "transcript") return activeSession.transcript;
-    if (tab === "metadata") {
-      const metadata = activeSession.metadata;
-      return [
-        `${t("metadata.created")}: ${formatDateTime(activeSession.createdAt, locale)}`,
-        `${t("metadata.duration")}: ${formatDuration(metadata.durationSec)}`,
-        `${t("metadata.mode")}: ${modeLabel}`,
-        `${t("metadata.whisper")}: ${metadata.whisperProvider}`,
-        `${t("metadata.llm")}: ${metadata.llmProvider}`,
-        `${t("metadata.keywords")}: ${metadata.keywords.join(", ") || "-"}`,
-      ].join("\n");
+  const getActiveTabContent = () => {
+    if (activeTab === "metadata") {
+      return getFullContent();
     }
-    return activeSession.enriched;
-  };
-
-  const getTabMarkdown = (tab: string) => {
-    if (tab === "metadata") {
-      const metadata = activeSession.metadata;
-      return [
-        `# ${titleValue || t("common.untitled")}`,
-        "",
-        `- ${t("metadata.created")}: ${formatDateTime(activeSession.createdAt, locale)}`,
-        `- ${t("metadata.duration")}: ${formatDuration(metadata.durationSec)}`,
-        `- ${t("metadata.mode")}: ${modeLabel}`,
-        `- ${t("metadata.whisper")}: ${metadata.whisperProvider}`,
-        `- ${t("metadata.llm")}: ${metadata.llmProvider}`,
-        `- ${t("metadata.keywords")}: ${metadata.keywords.join(", ") || "-"}`,
-      ].join("\n");
+    if (activeTab === "transcript") {
+      return activeSession.transcript;
     }
-    if (tab === "transcript") {
-      return `# ${t("tabs.transcript")}\n\n${activeSession.transcript}`;
-    }
+    // enriched tab
     return activeSession.enriched;
   };
 
@@ -414,11 +411,12 @@ export function SessionView() {
             <Button
               variant="secondary"
               onClick={async () => {
+                const tabLabel = activeTab === "enriched" ? t("tabs.enriched") : activeTab === "transcript" ? t("tabs.transcript") : t("tabs.metadata");
                 try {
-                  await navigator.clipboard.writeText(getTabContent(activeTab));
-                  showFeedback(t("feedback.copied"), "success");
+                  await navigator.clipboard.writeText(getActiveTabContent());
+                  actions.showStatus(t("feedback.copiedWhat", { what: tabLabel }));
                 } catch {
-                  showFeedback(t("feedback.copyFailed"), "error");
+                  actions.showStatus(t("feedback.copyFailed"), "error");
                 }
               }}
             >
@@ -428,53 +426,20 @@ export function SessionView() {
             <Button
               variant="outline"
               onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(getTabMarkdown(activeTab));
-                  showFeedback(t("feedback.copiedMarkdown"), "success");
-                } catch {
-                  showFeedback(t("feedback.copyFailed"), "error");
-                }
-              }}
-            >
-              <FileText className="h-4 w-4" />
-              {t("buttons.copyMarkdown")}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={async () => {
-                const name = `${titleValue || t("file.defaultName")}-${activeTab}.md`;
-                const result = await saveTextFile(getTabMarkdown(activeTab), name);
+                const baseName = titleValue || t("file.defaultName");
+                const prefix = activeTab === "enriched" ? `${modeLabelForFile}_` : activeTab === "transcript" ? "transkript_" : "";
+                const name = `${prefix}${baseName}.md`;
+                const tabLabel = activeTab === "enriched" ? t("tabs.enriched") : activeTab === "transcript" ? t("tabs.transcript") : t("tabs.metadata");
+                const result = await saveTextFile(getActiveTabContent(), name);
                 if (result.ok) {
-                  if (result.path) setLastSavePath(result.path);
-                  showFeedback(t("feedback.saved"), "success");
+                  actions.showStatus(t("feedback.savedWhat", { what: tabLabel }));
                 } else if (!result.canceled) {
-                  showFeedback(t("feedback.saveFailed"), "error");
+                  actions.showStatus(t("feedback.saveFailed"), "error");
                 }
               }}
             >
               {t("buttons.save")}
             </Button>
-            <Button
-              variant="ghost"
-              onClick={async () => {
-                const result = await openAppFolder(lastSavePath ?? undefined);
-                if (!result.ok) {
-                  showFeedback(t("feedback.openFolderFailed"), "error");
-                }
-              }}
-            >
-              <FolderOpen className="h-4 w-4" />
-              {t("buttons.openFolder")}
-            </Button>
-            {feedback && (
-              <span
-                className={`text-xs ${
-                  feedback.tone === "success" ? "text-emerald-600" : "text-destructive"
-                }`}
-              >
-                {feedback.message}
-              </span>
-            )}
           </div>
         </div>
         <TabsContent value="enriched">

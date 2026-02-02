@@ -833,6 +833,7 @@ type StoreState = {
   settings: Settings;
   settingsSource: "api" | "tauri" | "local" | "default";
   recordingLevel: number;
+  statusMessage: { text: string; tone: "success" | "error" } | null;
 };
 
 type StoreActions = {
@@ -844,11 +845,13 @@ type StoreActions = {
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   uploadAudio: (file: File) => Promise<void>;
+  uploadTranscript: (file: File) => Promise<void>;
   retryProcessing: () => Promise<void>;
   cancelProcessing: () => void;
   updateSessionTitle: (id: string, title: string) => void;
   updateSettings: (settings: Settings) => Promise<void>;
   toggleTheme: () => void;
+  showStatus: (text: string, tone?: "success" | "error") => void;
 };
 
 const StoreContext = createContext<{ state: StoreState; actions: StoreActions } | null>(null);
@@ -880,6 +883,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   >("default");
   const [isHydrated, setIsHydrated] = useState(false);
   const [recordingLevel, setRecordingLevel] = useState(0);
+  const [statusMessage, setStatusMessage] = useState<{ text: string; tone: "success" | "error" } | null>(null);
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedSessions = useRef(false);
   const hasUserUpdatedSettings = useRef(false);
   const hasUserModifiedSessions = useRef(false);
@@ -1122,7 +1127,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       id: getRandomId(),
       title: "",
       createdAt: new Date().toISOString(),
-      mode,
+      mode: modeRef.current,
       status: "idle",
       transcript: "",
       enriched: "",
@@ -1136,6 +1141,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       ...partial,
     };
     hasUserModifiedSessions.current = true;
+    sessionsRef.current = [newSession, ...sessionsRef.current];
     setSessions((prev) => {
       const next = [newSession, ...prev];
       if (settingsSourceRef.current !== "api") {
@@ -1158,6 +1164,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const updateSession = (id: string, updates: Partial<Session>) => {
     hasUserModifiedSessions.current = true;
+    // Synchronously update the ref so subsequent reads see the change immediately
+    sessionsRef.current = sessionsRef.current.map((session) => {
+      if (session.id !== id) return session;
+      return { ...session, ...updates };
+    });
     setSessions((prev) => {
       let updatedSession: Session | null = null;
       const next = prev.map((session) => {
@@ -1419,7 +1430,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const actions: StoreActions = {
     setSearchQuery,
-    setMode,
+    setMode: (m: Mode) => {
+      modeRef.current = m;
+      setMode(m);
+    },
     selectSession: (id) => setActiveSessionId(id),
     createEmptySession: () => {
       if (getProcessingSession()) return;
@@ -1496,7 +1510,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           updateSession(active.id, {
             status: "recording",
             recordingStartedAt: Date.now(),
-            mode,
+            mode: modeRef.current,
             errorMessage: undefined,
             metadata: {
               ...active.metadata,
@@ -1637,7 +1651,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           status: "processing",
           stage: "transcribing",
           title: file.name || "Audio Upload",
-          mode,
+          mode: modeRef.current,
           transcript: "",
           enriched: "",
           recordingStartedAt: undefined,
@@ -1677,6 +1691,138 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       setAudioBlob(session.id, workingBlob);
       const durationSec = await resolveAudioDurationSec(workingBlob, 0);
       void processAudio(session.id, workingBlob, durationSec);
+    },
+    uploadTranscript: async (file: File) => {
+      if (!file) return;
+      if (getProcessingSession()) return;
+
+      let transcript = "";
+      try {
+        transcript = await file.text();
+      } catch (error) {
+        const locale = settingsRef.current.general.language;
+        createSession({
+          status: "error",
+          title: file.name || "Transcript Upload",
+          errorMessage: translate(getMessages(locale), "errors.noTranscript"),
+        });
+        return;
+      }
+
+      if (!transcript.trim()) {
+        const locale = settingsRef.current.general.language;
+        createSession({
+          status: "error",
+          title: file.name || "Transcript Upload",
+          errorMessage: translate(getMessages(locale), "errors.noTranscript"),
+        });
+        return;
+      }
+
+      const active = getActiveSession();
+      const canReuse =
+        active && active.status === "idle" && !active.transcript && !active.enriched;
+      const session = canReuse
+        ? active
+        : createSession({
+            status: "processing",
+            stage: "enriching",
+            title: file.name || "Transcript Upload",
+            transcript,
+            mode: modeRef.current,
+          });
+
+      if (canReuse && session) {
+        updateSession(session.id, {
+          status: "processing",
+          stage: "enriching",
+          title: file.name || "Transcript Upload",
+          mode: modeRef.current,
+          transcript,
+          enriched: "",
+          recordingStartedAt: undefined,
+          errorMessage: undefined,
+          errorDetails: undefined,
+          audioUrl: undefined,
+          audioPath: undefined,
+          audioMime: undefined,
+          metadata: {
+            durationSec: 0,
+            keywords: [],
+            whisperProvider: settingsRef.current.api.whisper.provider,
+            llmProvider: settingsRef.current.api.llm.provider,
+          },
+        });
+      }
+
+      const controller = startProcessingController(session.id);
+      const signal = controller.signal;
+      const settingsSnapshot = settingsRef.current;
+      const sessionSnapshot = getSessionById(session.id);
+      const sessionMode = sessionSnapshot?.mode ?? modeRef.current;
+      const template =
+        settingsSnapshot.enrichments.find((item) => item.id === sessionMode) ??
+        settingsSnapshot.enrichments[0];
+      const baseMetadata = sessionSnapshot?.metadata ?? {
+        durationSec: 0,
+        keywords: [],
+        whisperProvider: settingsSnapshot.api.whisper.provider,
+        llmProvider: settingsSnapshot.api.llm.provider,
+      };
+
+      try {
+        const { enriched, keywords } = await enrichTranscript(
+          transcript,
+          template?.prompt || "",
+          settingsSnapshot,
+          signal
+        );
+        updateSession(session.id, {
+          status: "done",
+          stage: undefined,
+          enriched,
+          errorMessage: undefined,
+          errorDetails: undefined,
+          metadata: {
+            ...baseMetadata,
+            durationSec: 0,
+            keywords: keywords.length ? keywords : extractKeywords(transcript, 6),
+            whisperProvider: settingsSnapshot.api.whisper.provider,
+            llmProvider: settingsSnapshot.api.llm.provider,
+          },
+        });
+      } catch (error) {
+        if (signal.aborted || isAbortError(error)) {
+          const locale = settingsSnapshot.general.language;
+          const message = translate(getMessages(locale), "errors.processingCancelled");
+          updateSession(session.id, {
+            status: "error",
+            stage: undefined,
+            errorMessage: message,
+            errorDetails: buildErrorDetails("enriching", settingsSnapshot, message),
+          });
+          return;
+        }
+        const locale = settingsSnapshot.general.language;
+        const fallback = translate(getMessages(locale), "errors.enrichmentFailed");
+        const rawMessage =
+          error instanceof Error
+            ? error.message
+            : typeof error === "string"
+            ? error
+            : typeof error === "object" && error && "message" in error
+            ? String((error as any).message)
+            : fallback;
+        const message = localizeError(rawMessage, locale);
+        updateSession(session.id, {
+          status: "error",
+          stage: undefined,
+          errorMessage: message,
+          errorDetails: buildErrorDetails("enriching", settingsSnapshot, rawMessage),
+        });
+      } finally {
+        clearProcessingController(session.id);
+      }
     },
     retryProcessing: async () => {
       const active = getActiveSession();
@@ -1763,6 +1909,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         },
       }));
     },
+    showStatus: (text: string, tone: "success" | "error" = "success") => {
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+      setStatusMessage({ text, tone });
+      statusTimerRef.current = setTimeout(() => setStatusMessage(null), 3000);
+    },
   };
 
   const value = useMemo(
@@ -1775,10 +1926,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         settings,
         settingsSource,
         recordingLevel,
+        statusMessage,
       },
       actions,
     }),
-    [sessions, activeSessionId, searchQuery, mode, settings, settingsSource, recordingLevel]
+    [sessions, activeSessionId, searchQuery, mode, settings, settingsSource, recordingLevel, statusMessage]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
