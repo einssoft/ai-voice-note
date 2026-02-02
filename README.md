@@ -76,6 +76,13 @@ Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
 4. **Hotkey testen**: `Ctrl+Shift+R` (oder konfigurierte Kombination)
 5. **Erste Aufnahme**: Mic-Button klicken oder Hotkey drücken, sprechen, stoppen
 
+### Testdaten
+
+Im Verzeichnis `test/` liegen Beispieldateien zum schnellen Ausprobieren:
+
+- **`test/audio/`** – Audio-Dateien (MP3), die über "Audio hochladen" importiert werden können
+- **`test/transkript/`** – Transkript-Dateien (TXT), die über "Transkript hochladen" direkt ins Enrichment gehen
+
 ---
 
 ## Die Lösung
@@ -424,6 +431,12 @@ Jede Sprachaufnahme durchläuft eine Pipeline: Aufnahme → Transkription → KI
 - SQLite für strukturierte Daten, Dateisystem für Audio
 - Trennung Frontend/Backend auch in Desktop-App (saubere Interfaces)
 - Ermöglicht zukünftige Remote-Backend-Anbindung ohne große Refactors
+
+**Keine Benutzerverwaltung / Authentifizierung**
+- Die Applikation läuft als lokale Desktop-App – das Benutzermanagement wird durch das Betriebssystem sichergestellt (OS-Login, Dateisystemberechtigungen)
+- API-Keys werden lokal gespeichert und nur an die konfigurierten Provider-Endpoints gesendet – die Authentifizierung erfolgt dort extern
+- Webhook-Endpunkte sind vom Nutzer konfiguriert und setzen serverseitige Absicherung voraus
+- Eine eigene Auth-Schicht wäre Overengineering für eine Single-User-Desktop-App und würde die Einstiegshürde unnötig erhöhen
 
 **Provider-Architektur**
 - Einheitliche Interfaces für Whisper/LLM (`lib/processing.ts`)
