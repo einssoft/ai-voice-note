@@ -29,7 +29,7 @@ Optional für lokale AI:
 
 ```bash
 # Repository klonen
-git clone <repo-url>
+git clone https://github.com/einssoft/ai-voice-note.git
 cd ai-voice-note
 
 # Dependencies installieren
