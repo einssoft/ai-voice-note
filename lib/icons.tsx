@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Lightbulb,
   PenSquare,
+  Terminal,
   type LucideIcon,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ export const iconOptions: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "ClipboardList", label: "Clipboard", icon: ClipboardList },
   { id: "Lightbulb", label: "Lightbulb", icon: Lightbulb },
   { id: "PenSquare", label: "Pen", icon: PenSquare },
+  { id: "Terminal", label: "Terminal", icon: Terminal },
 ];
 
 export function getIconById(id: string | undefined) {

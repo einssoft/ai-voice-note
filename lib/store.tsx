@@ -666,9 +666,13 @@ function normalizeSettings(input: Partial<Settings> | any): Settings {
     language,
     localeDefaults.keywordsPrompt
   );
-  const enrichments = Array.isArray(legacy.enrichments) && legacy.enrichments.length
+  const savedEnrichments = Array.isArray(legacy.enrichments) && legacy.enrichments.length
     ? legacy.enrichments
     : localeDefaults.enrichments;
+  // Append any new default enrichments that are missing from saved settings
+  const savedIds = new Set(savedEnrichments.map((e: EnrichmentTemplate) => e.id));
+  const missingDefaults = localeDefaults.enrichments.filter((d: EnrichmentTemplate) => !savedIds.has(d.id));
+  const enrichments = [...savedEnrichments, ...missingDefaults];
   const ffmpegPath = legacy.ffmpegPath ?? legacy.paths?.ffmpegPath ?? defaultSettings.ffmpegPath;
 
   const rawWhisperKeys =

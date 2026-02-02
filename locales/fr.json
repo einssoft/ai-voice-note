@@ -111,11 +111,13 @@
   "enrichment.smart": "Notes intelligentes",
   "enrichment.tasks": "Tâches",
   "enrichment.meeting": "Notes de réunion",
-  "enrichment.email": "Brouillon d’e‑mail",
+  "enrichment.email": "Brouillon d'e‑mail",
+  "enrichment.prompt_builder": "Créer un prompt",
   "enrichment.prompt.smart": "Crée des notes intelligentes en Markdown avec des titres de section clairs :\\n- Résumé (3-5 puces)\\n- Décisions\\n- Prochaines étapes\\nRègles :\\n- Utilise uniquement les informations de la transcription.\\n- Pas d’inventions, pas de remplissage.\\n- Garde chaque puce courte.",
   "enrichment.prompt.tasks": "Extrait toutes les actions sous forme de liste.\\nRègles :\\n- Une tâche par puce.\\n- Inclure responsable/date/statut si mentionné.\\n- Pas de doublons, pas de contexte supplémentaire.",
   "enrichment.prompt.meeting": "Crée des notes de réunion structurées en Markdown :\\n- Résumé\\n- Points clés\\n- Décisions\\n- Actions (avec responsable/date si mentionné)\\n- Questions ouvertes\\nRègles :\\n- Utilise uniquement les faits de la transcription.\\n- Reste concis.",
-  "enrichment.prompt.email": "Rédige un e‑mail professionnel court basé sur la transcription.\\nStructure :\\n- Objet\\n- Salutation\\n- 3-6 phrases de synthèse + prochaines étapes\\n- Conclusion\\nRègles :\\n- N’invente pas de faits.",
+  "enrichment.prompt.email": "Rédige un e‑mail professionnel court basé sur la transcription.\\nStructure :\\n- Objet\\n- Salutation\\n- 3-6 phrases de synthèse + prochaines étapes\\n- Conclusion\\nRègles :\\n- N'invente pas de faits.",
+  "enrichment.prompt.prompt_builder": "Analyse la transcription et crée un prompt LLM précis et réutilisable (prompt système ou utilisateur).\\n\\nStructure de sortie :\\n## Objectif\\nDescription claire de ce que le prompt doit accomplir.\\n\\n## Prompt\\nLe prompt finalisé en Markdown, prêt à copier.\\n\\n## Remarques\\n- Indiquer les placeholders comme {{VARIABLE}}\\n- Déduire le contexte et les contraintes de la transcription\\n\\nRègles :\\n- Utiliser uniquement les informations de la transcription.\\n- Le prompt généré doit fonctionner seul (sans la transcription).\\n- Définir rôle, tâche, format et contraintes.\\n- Langue du prompt = langue de la transcription.",
   "keywords.defaultPrompt": "System / Instruction Prompt\\n\\nTu extrais des mots-clés à partir de la langue parlée.\\n\\nRègles :\\n\\nRetourne uniquement un tableau JSON valide (aucune explication, pas de Markdown).\\n\\nChaque mot-clé est une chaîne unique sans sauts de ligne.\\n\\nNormalise :\\n- pas de ponctuation\\n- pas de mots de remplissage (p. ex. \"oui\", \"quoi\", \"il y a\", \"aujourd’hui\", \"alors\", \"encore\")\\n- pas de doublons\\n- privilégier les noms ou syntagmes nominaux fixes\\n- pas de mots tronqués ni fragments\\n- max 3 mots par mot-clé\\n- 4-6 mots-clés\\n- ordre : plus important -> moins important\\n\\nExemple :\\nTexte :\\n\"Aujourd’hui, il y a de la pizza et une salade verte.\"\\n\\nSortie :\\n[\"Pizza\",\"salade verte\"]\\n\\nTexte :\\n{{TRANSCRIPT}}"
   ,
   "common.untitled": "Sans titre"

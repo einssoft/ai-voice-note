@@ -1,7 +1,7 @@
 import type { EnrichmentTemplate, Session } from "@/lib/store";
 import { getMessages, t, type Locale } from "@/lib/i18n";
 
-export const defaultEnrichmentIds = ["smart", "tasks", "meeting", "email"] as const;
+export const defaultEnrichmentIds = ["smart", "tasks", "meeting", "email", "prompt_builder"] as const;
 
 export function getDefaultEnrichments(locale: Locale = "de"): EnrichmentTemplate[] {
   const messages = getMessages(locale);
@@ -29,6 +29,12 @@ export function getDefaultEnrichments(locale: Locale = "de"): EnrichmentTemplate
       name: t(messages, "enrichment.email"),
       icon: "Mail",
       prompt: t(messages, "enrichment.prompt.email"),
+    },
+    {
+      id: "prompt_builder",
+      name: t(messages, "enrichment.prompt_builder"),
+      icon: "Terminal",
+      prompt: t(messages, "enrichment.prompt.prompt_builder"),
     },
   ];
 }
