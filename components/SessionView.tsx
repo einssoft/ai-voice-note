@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RecorderPanel } from "@/components/RecorderPanel";
 import { AudioPreview } from "@/components/AudioPreview";
 import { DateTimeText } from "@/components/DateTimeText";
+import { ActionPanel } from "@/components/ActionPanel";
+import "@/lib/actions";
 
 function Stepper({
   status,
@@ -99,7 +101,7 @@ export function SessionView() {
         options.push({ value, label });
       }
     };
-    if (settings.local.whisper.installed || settings.api.whisper.provider === "Local") {
+    if (settings.local.whisper.installed) {
       addOption("Local", t("provider.local"));
     }
     (settings.api.whisper.keys ?? []).forEach((entry) => {
@@ -124,7 +126,7 @@ export function SessionView() {
         options.push({ value, label });
       }
     };
-    if (settings.local.llm.available || settings.api.llm.provider === "Local") {
+    if (settings.local.llm.available) {
       addOption("Local", t("provider.local"));
     }
     (settings.api.llm.keys ?? []).forEach((entry) => {
@@ -186,6 +188,23 @@ export function SessionView() {
       },
     });
   };
+
+  // Auto-switch to first working provider if current one is unavailable
+  useEffect(() => {
+    const whisperCurrent = settings.api.whisper.provider;
+    if (!whisperProviderOptions.find((o) => o.value === whisperCurrent) && whisperProviderOptions.length) {
+      handleWhisperProviderChange(whisperProviderOptions[0].value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [whisperProviderOptions, settings.api.whisper.provider]);
+
+  useEffect(() => {
+    const llmCurrent = settings.api.llm.provider;
+    if (!llmProviderOptions.find((o) => o.value === llmCurrent) && llmProviderOptions.length) {
+      handleLlmProviderChange(llmProviderOptions[0].value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [llmProviderOptions, settings.api.llm.provider]);
 
   useEffect(() => {
     setTitleValue(activeSession?.title ?? "");
@@ -507,6 +526,9 @@ export function SessionView() {
           </div>
         </TabsContent>
       </Tabs>
+      {activeSession.status === "done" && (
+        <ActionPanel session={activeSession} language={settings.general.language} />
+      )}
     </div>
   );
 }

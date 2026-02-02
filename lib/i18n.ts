@@ -21,7 +21,7 @@ export function t(
   vars?: Record<string, string | number>
 ) {
   const template =
-    localeMessages[key] ?? messages[fallbackLocale][key as keyof typeof messages.en] ?? key;
+    localeMessages[key] ?? (messages[fallbackLocale] as Record<string, string>)[key] ?? key;
   if (!vars) return template;
   return Object.keys(vars).reduce(
     (acc, varKey) => acc.replaceAll(`{${varKey}}`, String(vars[varKey])),

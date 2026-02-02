@@ -1,0 +1,53 @@
+Lara: Okay Team, wir sind etwas spät dran. Sprint 14 startet heute. Wir haben eine Menge auf dem Zettel, vor allem weil das Management den Launch-Termin für die Beta-Phase vorgezogen hat. Ben, wie sieht’s an der Front aus?
+
+Ben: Ehrlich gesagt, nicht so rosig. Das Refactoring der Auth-Middleware – ihr wisst schon, das Ticket 402 – zieht sich. Ich musste feststellen, dass die aktuelle next-auth Library nicht sauber mit den Rust-Sidecars in Tauri kommuniziert, wenn wir verschlüsselte Sessions nutzen.
+
+Sophie: Warte mal, Ben. Heißt das, der Login-Bug im Safari-Browser hängt damit zusammen? Ich kriege da ständig Reports, dass die Session-Cookies einfach gedroppt werden.
+
+Ben: Genau das. Wenn ich das Refactoring jetzt abbreche, bauen wir technischen Schuldenberg auf, der uns in zwei Monaten einholt.
+
+Lara: Leute, wir können das Refactoring nicht ewig dehnen. Wir brauchen die Landingpage für die Investoren. Marc, wo stehst du mit den neuen Components?
+
+Marc: Die Figma-Files sind final. Ich hab die Landingpage und das neue Action-Panel fertig. Aber hier ist der Haken: Ich brauche die echten API-Endpunkte von Ben, um die Animationen der Skeleton-Screens zu testen. Wenn Ben noch am Core schraubt, arbeite ich mit Dummy-Daten, die am Ende vielleicht gar nicht zum Datenmodell passen.
+
+Lara: Marc, kannst du nicht einfach mit einem Mock-Server arbeiten?
+
+Marc: Klar, kann ich. Aber wir wissen alle, was passiert: Ich baue es für das Mock-JSON, und wenn Ben fertig ist, hat sich die Struktur von user_profile_v1 auf v2 geändert und ich fange von vorne an. Das ist Zeitverschwendung.
+
+Ben: Marc hat recht. Ich musste das Schema anpassen, um die Whisper-Metadaten effizienter zu speichern. Wir brauchen jetzt auch Felder für die Konfidenz-Scores der Transkription.
+
+Sophie: (unterbricht) Moment! Wenn wir Konfidenz-Scores speichern, müssen wir die Datenbank-Verschlüsselung anfassen. Das ist ein Security-Thema. Haben wir das im Sprint-Scope?
+
+Lara: (seufzt) Nein, hatten wir nicht. Aber wir brauchen es für die Qualitätssicherung. Sophie, was ist deine Einschätzung?
+
+Sophie: Meine Einschätzung ist: Der Safari-Bug ist Prio 0. Wir können keine App launchen, bei der 20% der User sich nicht einloggen können. Das Refactoring von Ben ist Prio 1, weil Marc davon abhängt. Die neuen Features für das Action-Panel müssen wir wohl auf Sprint 15 schieben.
+
+Lara: Sprint 15? Das ist zu spät für die Marketing-Demo. Wir brauchen wenigstens die "Copy-to-Clipboard" und "Send-Mail" Funktionen als funktionierende Prototypen.
+
+Ben: Okay, Vorschlag zur Güte: Ich priorisiere heute den Safari-Fix. Das ist ein Quick-Win in der Middleware. Danach mache ich den PR für das API-Schema fertig – auch wenn der Code dahinter noch "dirty" ist. Dann kann Marc mit den richtigen Strukturen arbeiten.
+
+Marc: Wenn ich die stabilen Strukturen bis morgen früh habe, kriege ich die Landingpage-Components bis Donnerstagabend fertig.
+
+Sophie: Und was ist mit den Unit-Tests für die Whisper-Integration?
+
+Ben: Die muss ich hinten anstellen. Ich schreibe nur die Integration-Tests für den Happy Path.
+
+Lara: Gut, so machen wir es. Aber wir müssen noch über die Webhooks reden. Tom (der heute nicht da ist) wollte unbedingt, dass wir Zapier-Support direkt zum Start haben.
+
+Ben: Zapier ist ein Rabbit-Hole. In Tauri müssen wir dafür eine sichere Verbindung für die API-Keys bauen. Marc, hast du dafür schon ein UI-Element?
+
+Marc: Ich hab einen simplen Toggle und ein Input-Feld für den Webhook-URL vorgesehen. Mehr würde ich für den MVP nicht machen. Ein Klick, Daten gehen raus, fertig.
+
+Sophie: Wir müssen aber prüfen, was passiert, wenn der Webhook einen 500er Fehler zurückgibt. Die App darf dann nicht einfrieren.
+
+Lara: Das kommt auf die To-do-Liste für Julia aus der QA. Ben, schreibst du das ins Ticket?
+
+Ben: Mach ich. Also: Safari-Fix, API-Schema-PR, dann Webhook-Dummy.
+
+Lara: Okay, ich fasse zusammen. Ben fokussiert heute den Safari-Login-Bug. Danach liefert er Marc die API-Strukturen für die Landingpage. Sophie macht den Smoke-Test für den Login morgen um 9:00 Uhr. Marc baut die UI mit den realen Feldern weiter. Die komplexen Whisper-Metadaten schieben wir technisch in den Hintergrund, aber das Schema steht.
+
+Ben: Und ich mache heute Abend den Pull Request für die Middleware auf. Bitte schaut da alle zeitnah drüber, besonders du, Sophie, wegen der Security-Sache.
+
+Marc: Geht klar. Ich fange schon mal an, die Tailwind-Config für das neue Action-Panel anzupassen.
+
+Lara: Perfekt. Wir haben einen Plan. 10 Minuten Punktlandung. An die Arbeit!

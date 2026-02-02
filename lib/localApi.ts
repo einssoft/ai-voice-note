@@ -71,11 +71,18 @@ export async function fetchSession(sessionId: string): Promise<Session | null> {
 }
 
 export async function saveSession(session: Session) {
-  await fetchWithTimeout(`${LOCAL_API_BASE}/sessions/${session.id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(session),
-  });
+  try {
+    const res = await fetchWithTimeout(`${LOCAL_API_BASE}/sessions/${session.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(session),
+    });
+    if (!res.ok) {
+      console.error("[saveSession] failed:", res.status, res.statusText, "id:", session.id);
+    }
+  } catch (err) {
+    console.error("[saveSession] error:", err, "id:", session.id);
+  }
 }
 
 export async function deleteSession(sessionId: string) {

@@ -6,6 +6,13 @@ import { getMessages, t as translate } from "@/lib/i18n";
 const OPENAI_BASE_URL = "https://api.openai.com";
 const OPENAI_WHISPER_MODEL = "whisper-1";
 const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+
+export const KNOWN_PROVIDER_URLS: Record<string, string> = {
+  OpenAI: "https://api.openai.com",
+  Claude: "https://api.anthropic.com",
+  Gemini: "https://generativelanguage.googleapis.com",
+  Grok: "https://api.x.ai",
+};
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 const KEYWORD_LIMIT = 6;
 const DEFAULT_KEYWORD_PROMPT =
@@ -381,7 +388,7 @@ function resolveLlmCredentials(settings: Settings) {
   return {
     provider,
     apiKey: selected?.apiKey ?? settings.api.llm.apiKey,
-    baseUrl: selected?.baseUrl ?? settings.api.llm.baseUrl,
+    baseUrl: selected?.baseUrl ?? settings.api.llm.baseUrl ?? KNOWN_PROVIDER_URLS[provider] ?? "",
     model: selected?.model ?? settings.api.llm.model,
   };
 }

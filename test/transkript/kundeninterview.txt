@@ -1,0 +1,35 @@
+Markus: Erstmal vielen Dank, Frau Schneider, dass Sie sich die Zeit nehmen. Wir wollen heute gar nicht so sehr über technische Features reden, sondern eher über Ihren Alltag. Erzählen Sie doch mal: Wie läuft bei Ihnen aktuell die Nachbereitung von Meetings ab?
+
+Frau Schneider: Oh je, wo soll ich da anfangen? Also... meistens ist es ein einziges Chaos, wenn ich ehrlich bin. Ich sitze im Meeting, habe mein iPad dabei oder manchmal auch ganz klassisch ein Notizbuch. Ich schreibe wie wild mit, aber, äh, meistens verliere ich nach zehn Minuten den Anschluss, weil die Diskussion zu schnell geht.
+
+Markus: Und was passiert nach dem Meeting mit diesen Notizen?
+
+Frau Schneider: Naja, das ist das Problem. Die liegen dann da. Ich nehme mir fest vor, sie abtippen, aber dann kommt das nächste Telefonat, die nächste Mail... und am Ende der Woche schaue ich in mein Buch und denke mir: „Was meinte der Kunde eigentlich mit ‚Prio Blau‘?“ Ich kann meine eigene Handschrift nicht mehr lesen oder der Kontext fehlt komplett. Es ist frustrierend.
+
+Markus: Haben Sie denn schon mal versucht, Tools zur Aufnahme oder Transkription zu nutzen?
+
+Frau Schneider: Ja, natürlich. Wir hatten mal so eine App, ich nenne jetzt keinen Namen, aber die war furchtbar. Die hat alles eins zu eins mitgeschrieben. Jedes „Ähm“, jedes Mal, wenn jemand gehustet hat oder wir kurz über den Urlaub vom Kollegen gesprochen haben. Am Ende hatte ich ein Dokument mit 30 Seiten Text. Wer soll das lesen? Ich habe eine halbe Stunde gebraucht, um die drei wichtigen Sätze da rauszufiltern. Das war mehr Arbeit als vorher.
+
+Markus: Verstehe. Das heißt, das Problem war nicht die Aufnahme an sich, sondern die Informationsdichte?
+
+Frau Schneider: Ganz genau. Ich brauche keine Sekretärin, die jedes Wort protokolliert. Ich brauche jemanden – oder etwas – das versteht, was wichtig war. Wenn mein Chef sagt: „Frau Schneider, kümmern Sie sich um das Budget“, dann will ich, dass das fett markiert irgendwo steht. Und der Rest, also das Geplänkel über das Wetter oder die Kaffeemaschine, das kann eigentlich direkt in den Müll.
+
+Markus: Wenn Sie sich ein ideales Werkzeug backen könnten – wie würde dieser Moment nach dem Meeting aussehen?
+
+Frau Schneider: Hm. Also am besten wäre es so: Ich drücke während des Meetings nur auf einen Knopf. Und wenn ich im Auto sitze oder zurück am Schreibtisch bin, kriege ich eine kurze Nachricht auf mein Handy oder meinen Desktop. Da steht dann drin: „Das sind die drei Dinge, die du tun musst, und das ist die Zusammenfassung für den Kunden.“ Oh, und ganz wichtig: Ich will das direkt verschicken können.
+
+Markus: Direkt verschicken? An wen?
+
+Frau Schneider: Na, an das Team. Wir nutzen Slack und E-Mail. Es nervt mich tierisch, dass ich Texte erst kopieren, Word öffnen, formatieren und dann in eine Mail einfügen muss. Das sind so viele Klicks. Warum kann die App nicht einfach sagen: „Hier ist der Entwurf, soll ich ihn an das Projekt-Team mailen?“ Ein Klick, erledigt.
+
+Markus: Das klingt nach einem großen Wunsch nach Integration. Wie sieht es mit dem Datenschutz aus? Wir reden ja oft über vertrauliche Kundendaten.
+
+Frau Schneider: Das ist ein wunder Punkt. Das ist auch der Grund, warum wir viele Online-Tools nicht nutzen dürfen. Die Rechtsabteilung kriegt Schnappatmung, wenn die Daten auf irgendwelchen Servern in Übersee landen. Wenn das Ganze lokal auf meinem Rechner bleiben würde, also so richtig privat, wäre das ein riesiger Pluspunkt. Da würde ich sogar mehr für bezahlen.
+
+Markus: Das ist ein sehr wertvoller Punkt. Also Zusammenfassung, direkte Aktion und lokale Sicherheit. Gibt es sonst noch etwas, das Sie bei aktueller Software stört?
+
+Frau Schneider: Ja, die Komplexität. Ich will kein Dashboard mit 50 Reglern sehen. Ich will ein Tool, das einfach da ist, wenn ich es brauche, und verschwindet, wenn ich fertig bin. Minimalismus ist mir wichtig. Ich habe schon genug Apps, die meine Aufmerksamkeit stehlen.
+
+Markus: Frau Schneider, das war extrem hilfreich. Ich glaube, ich habe ein sehr klares Bild davon, was wir in „AudioFlow“ priorisieren müssen. Vielen Dank für Ihre Offenheit!
+
+Frau Schneider: Gerne. Wenn Sie das so hinkriegen, bin ich Ihre erste Kundin!

@@ -1,0 +1,39 @@
+[Lukas]: Schön, dass ihr alle da seid. Wir haben 10 Minuten für den offiziellen Startschuss von „AudioFlow“. Kurz zur Vision: Wir wollen Voice Intelligence nativ auf den Desktop bringen. Kein Browser-Tab-Chaos, sondern ein Power-Tool.
+
+[Tom]: Genau. Das Ziel ist „Zero Friction“. Der User spricht oder droppt ein File, die KI versteht nicht nur den Text, sondern den Kontext, und am Ende steht eine Aktion. Kein Copy-Paste-Marathon mehr.
+
+[Sarah]: Das Design wird entsprechend clean. Da wir Next.js nutzen, können wir die UI sehr schnell iterieren. Ich plane ein minimalistisches Dashboard, das sich fast wie eine native macOS- oder Windows-App anfühlt.
+
+[Marc]: Da kommen wir zum spannenden Teil. Da wir Tauri nutzen, haben wir den Vorteil, dass die App extrem schlank bleibt. Ich werde die Rust-Bridge für die Audio-Verarbeitung optimieren.
+
+[Elena]: Marc, wie sieht es mit der Whisper-Integration aus? Machen wir das lokal oder über eine API?
+
+[Marc]: Erstmal über API für die Geschwindigkeit, aber ich möchte die Option für lokales Whisper via Rust-Bindungen offenhalten, falls jemand maximale Privatsphäre will.
+
+[Elena]: Perfekt. Mein Fokus liegt auf der „Intelligence“-Ebene. Nach der Transkription jagen wir das Ganze durch ein fein abgestimmtes Prompting. Der User soll ja wählen können: „Mach ein Protokoll“, „Schreib eine Mail“ oder „Extrahiere die To-dos“.
+
+[Julia]: Kurze Zwischenfrage zur Stabilität: Wie gehen wir mit Hintergrundgeräuschen um? Wenn jemand im Café sitzt und aufnimmt, darf die AI nicht halluzinieren.
+
+[Elena]: Guter Punkt, Julia. Ich plane einen Pre-Processing-Schritt für die Audio-Files ein, bevor sie an Whisper gehen.
+
+[Sarah]: Lukas, wir hatten über die „Actions“ gesprochen. Das Logo deutet es ja an: Audio rein -> Intelligenz -> Aktion raus. Wie tief integrieren wir uns in andere Apps?
+
+[Lukas]: Für den MVP: „Copy to Clipboard“, „Save as Markdown“ und ein direkter Mail-Draft-Trigger.
+
+[Tom]: Ich fände es wichtig, dass wir auch einen Webhook-Button haben. Dann können Power-User das direkt an Zapier oder Make schicken.
+
+[Marc]: Webhooks sind in Tauri kein Problem. Ich kann ein Modul schreiben, das die Header sicher verwaltet.
+
+[Julia]: Und wie sieht es mit der Fehlerbehandlung aus? Wenn die Transkription fehlschlägt, brauchen wir einen sauberen State in der UI, damit der User nicht vor einem leeren Screen sitzt.
+
+[Sarah]: Ich baue dafür „Skeleton Screens“ und ein Live-Feedback während des Transkribierens ein. Man soll sehen, dass die App gerade „denkt“.
+
+[Lukas]: Die Zeit rennt. Fassen wir zusammen: Marc setzt das Tauri-Grundgerüst auf, Sarah baut den ersten Prototyp der UI in Next.js. Elena, du lieferst uns die ersten Prompt-Templates für die Voice-Anreicherung.
+
+[Elena]: Geht klar. Ich teste heute Nachmittag noch verschiedene Whisper-Parameter.
+
+[Tom]: Ich finalisiere die User Stories für die drei Kern-Aktionen.
+
+[Julia]: Ich erstelle den Testplan, besonders für lange Audiofiles – wir müssen sehen, wo das Zeitlimit liegt.
+
+[Lukas]: Perfekt. Wir treffen uns in zwei Tagen zum ersten Sync am Board. Die Energie stimmt, das Logo steht, fangen wir an!

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { seedSessions, getDefaultEnrichments, getDefaultKeywordsPrompt } from "@/lib/mock";
+import { getDefaultEnrichments, getDefaultKeywordsPrompt } from "@/lib/mock";
 import { AudioRecorder } from "@/lib/audioRecorder";
 import { enrichTranscript, transcribeAudio, extractKeywords } from "@/lib/processing";
 import { getMessages, t as translate, type Locale } from "@/lib/i18n";
@@ -176,24 +176,28 @@ const LEGACY_ENRICHMENT_PROMPTS: Partial<Record<Locale, Record<string, string>>>
     tasks: "Extrahiere alle Aufgaben und To-dos als kurze Liste. Halte jeden Punkt knapp.",
     meeting: "Erstelle strukturierte Meeting-Notizen:\n- Zusammenfassung\n- Kernthemen\n- Entscheidungen\n- Action Items",
     email: "Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript. Fuege eine Betreffzeile hinzu.",
+    prompt_builder: "Analysiere das Transkript und erstelle daraus einen präzisen, wiederverwendbaren LLM-Prompt (System- oder User-Prompt).\\n\\nStruktur des Outputs:\\n## Ziel\\nEine klare Beschreibung, was der Prompt bewirken soll.\\n\\n## Prompt\\nDer fertige Prompt in Markdown, bereit zum Kopieren.\\n\\n## Hinweise\\n- Platzhalter als {{VARIABLE}} kennzeichnen\\n- Kontext und Constraints aus dem Transkript ableiten\\n\\nRegeln:\\n- Nur Informationen aus dem Transkript verwenden.\\n- Der generierte Prompt muss eigenständig funktionieren (ohne das Transkript).\\n- Klare Rollenanweisung, Aufgabe, Format und Constraints definieren.\\n- Prompt-Sprache = Sprache des Transkripts.",
   },
   en: {
     smart: "Create smart notes with:\n- Short summary\n- Decisions\n- Next steps",
     tasks: "Extract all action items and tasks as a short bullet list. Keep each item concise.",
     meeting: "Create well-structured meeting notes:\n- Summary\n- Key points\n- Decisions\n- Action items",
     email: "Draft a concise professional email based on the transcript. Include a subject line.",
+    prompt_builder: "Analyze the transcript and create a precise, reusable LLM prompt (system or user prompt).\\n\\nOutput structure:\\n## Goal\\nA clear description of what the prompt should accomplish.\\n\\n## Prompt\\nThe finished prompt in Markdown, ready to copy.\\n\\n## Notes\\n- Mark placeholders as {{VARIABLE}}\\n- Derive context and constraints from the transcript\\n\\nRules:\\n- Use only information from the transcript.\\n- The generated prompt must work standalone (without the transcript).\\n- Define clear role instruction, task, format and constraints.\\n- Prompt language = language of the transcript.",
   },
   fr: {
     smart: "Crée des notes intelligentes avec :\n- Résumé court\n- Décisions\n- Prochaines étapes",
     tasks: "Extrait toutes les actions et tâches sous forme de liste concise.",
     meeting: "Crée des notes de réunion structurées :\n- Résumé\n- Points clés\n- Décisions\n- Actions",
     email: "Rédige un e‑mail professionnel concis basé sur la transcription. Inclure un objet.",
+    prompt_builder: "Analyse la transcription et crée un prompt LLM précis et réutilisable (prompt système ou utilisateur).\\n\\nStructure de sortie :\\n## Objectif\\nDescription claire de ce que le prompt doit accomplir.\\n\\n## Prompt\\nLe prompt finalisé en Markdown, prêt à copier.\\n\\n## Remarques\\n- Indiquer les placeholders comme {{VARIABLE}}\\n- Déduire le contexte et les contraintes de la transcription\\n\\nRègles :\\n- Utiliser uniquement les informations de la transcription.\\n- Le prompt généré doit fonctionner seul (sans la transcription).\\n- Définir rôle, tâche, format et contraintes.\\n- Langue du prompt = langue de la transcription.",
   },
   it: {
     smart: "Crea note intelligenti con:\n- Breve sintesi\n- Decisioni\n- Prossimi passi",
     tasks: "Estrai tutte le attività e i to‑do come elenco conciso.",
     meeting: "Crea note di riunione strutturate:\n- Sintesi\n- Punti chiave\n- Decisioni\n- Azioni",
-    email: "Redigi un’e‑mail professionale concisa basata sulla trascrizione. Includi un oggetto.",
+    email: "Redigi un'e‑mail professionale concisa basata sulla trascrizione. Includi un oggetto.",
+    prompt_builder: "Analizza la trascrizione e crea un prompt LLM preciso e riutilizzabile (prompt di sistema o utente).\\n\\nStruttura output:\\n## Obiettivo\\nDescrizione chiara di cosa deve fare il prompt.\\n\\n## Prompt\\nIl prompt finito in Markdown, pronto da copiare.\\n\\n## Note\\n- Segnaposto come {{VARIABLE}}\\n- Derivare contesto e vincoli dalla trascrizione\\n\\nRegole:\\n- Usare solo informazioni dalla trascrizione.\\n- Il prompt generato deve funzionare autonomamente (senza la trascrizione).\\n- Definire ruolo, compito, formato e vincoli.\\n- Lingua del prompt = lingua della trascrizione.",
   },
 };
 
@@ -268,7 +272,11 @@ function resolveLocale(value: unknown): Locale {
 }
 
 function normalizePromptText(value: string) {
-  return value.trim().replaceAll("\r\n", "\n").replaceAll("\u00df", "ss");
+  return value.trim().replaceAll("\\n", "\n").replaceAll("\r\n", "\n").replaceAll("\u00df", "ss");
+}
+
+function cleanPromptNewlines(value: string) {
+  return value.replaceAll("\\n", "\n");
 }
 
 function migrateKeywordsPrompt(prompt: string, locale: Locale, fallback: string) {
@@ -277,7 +285,7 @@ function migrateKeywordsPrompt(prompt: string, locale: Locale, fallback: string)
   if (legacy && normalizePromptText(prompt) === normalizePromptText(legacy)) {
     return fallback;
   }
-  return prompt;
+  return cleanPromptNewlines(prompt);
 }
 
 function migrateEnrichments(
@@ -290,14 +298,14 @@ function migrateEnrichments(
   const legacyById = LEGACY_ENRICHMENT_PROMPTS[locale] ?? {};
   return enrichments.map((item) => {
     const nextPrompt = defaultsById.get(item.id);
-    if (!nextPrompt) return item;
+    if (!nextPrompt) return { ...item, prompt: cleanPromptNewlines(item.prompt ?? "") };
     const currentPrompt = (item.prompt ?? "").trim();
     if (!currentPrompt) return { ...item, prompt: nextPrompt };
     const legacyPrompt = legacyById[item.id];
     if (legacyPrompt && normalizePromptText(currentPrompt) === normalizePromptText(legacyPrompt)) {
       return { ...item, prompt: nextPrompt };
     }
-    return item;
+    return { ...item, prompt: cleanPromptNewlines(item.prompt ?? "") };
   });
 }
 
@@ -824,6 +832,8 @@ function localizeError(message: string, locale: Locale) {
     "Local LLM is not configured.": "errors.localLlm",
     "Whisper binary not found. Set the path in Setup Wizard.": "errors.localTranscription",
     "Whisper model path required for whisper.cpp.": "errors.localTranscription",
+    "Load failed": "errors.loadFailed",
+    "Failed to fetch": "errors.loadFailed",
   };
   const key = map[message];
   return key ? translate(messages, key) : message;
@@ -867,7 +877,7 @@ function getRandomId() {
   return `sess-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function applyTheme(theme: Settings["theme"]) {
+function applyTheme(theme: Settings["general"]["theme"]) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -877,7 +887,7 @@ function applyTheme(theme: Settings["theme"]) {
 
 
 export function AppStoreProvider({ children }: { children: React.ReactNode }) {
-  const [sessions, setSessions] = useState<Session[]>(seedSessions);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [mode, setMode] = useState<Mode>(defaultSettings.enrichments[0]?.id ?? "smart");
@@ -910,7 +920,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       const localSessionsKey =
         typeof window !== "undefined" ? localStorage.getItem(SESSIONS_KEY) : null;
       const localSettingsRaw = safeParseJson<Settings>(localSettingsKey, defaultSettings);
-      const localSessions = safeParseJson<Session[]>(localSessionsKey, seedSessions);
+      const localSessions = safeParseJson<Session[]>(localSessionsKey, []);
 
       const tauriSettingsRaw =
         (await readFromTauri(SETTINGS_FILE)) ?? (await readFromTauri(LEGACY_SETTINGS_FILE));
@@ -930,6 +940,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         await wait(250);
       }
 
+
       if (apiAvailable) {
         const [settingsResult, sessionsResult] = await Promise.allSettled([
           fetchApiSettings(),
@@ -943,18 +954,30 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           ...session,
           audioUrl: session.audioUrl || undefined,
         }));
-        const loadedSettings = normalizeSettings(apiSettings ?? fallbackSettings);
-        const loadedSessions = apiSessions.length ? apiSessions : fallbackSessions;
+        // Prefer fallback settings when they have enrichments the API lacks
+        const normApi = normalizeSettings(apiSettings ?? {});
+        const normFallback = normalizeSettings(fallbackSettings);
+        const apiEnrichCount = normApi.enrichments?.length ?? 0;
+        const fbEnrichCount = normFallback.enrichments?.length ?? 0;
+        const preferFallbackSettings = fbEnrichCount > apiEnrichCount;
+        const loadedSettings = preferFallbackSettings ? normFallback : normApi;
+        // Merge: API sessions + any fallback-only sessions not in API
+        const apiSessionIds = new Set(apiSessions.map((s) => s.id));
+        const missingFromApi = fallbackSessions.filter((s) => !apiSessionIds.has(s.id));
+        const loadedSessions = apiSessions.length
+          ? [...apiSessions, ...missingFromApi]
+          : fallbackSessions;
         const shouldSeedApiSettings =
           settingsResult.status !== "fulfilled" ||
           !apiSettings ||
+          preferFallbackSettings ||
           (typeof apiSettings === "object" && Object.keys(apiSettings).length === 0);
         if (!active) return;
         if (!hasUserUpdatedSettings.current) {
           setSettings(loadedSettings);
         }
         if (!hasUserModifiedSessions.current) {
-          setSessions(loadedSessions.length ? loadedSessions : seedSessions);
+          setSessions(loadedSessions.length ? loadedSessions : []);
         }
         setSettingsSource("api");
         hasLoadedSessions.current = true;
@@ -962,12 +985,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (shouldSeedApiSettings) {
           void saveApiSettings(loadedSettings);
         }
-        if (!apiSessions.length && hasStoredSessions && loadedSessions.length) {
+        const sessionsToSync = !apiSessions.length && hasStoredSessions
+          ? loadedSessions
+          : missingFromApi;
+        if (sessionsToSync.length) {
           void (async () => {
-            await Promise.all(loadedSessions.map((session) => saveApiSession(session)));
+            await Promise.all(sessionsToSync.map((session) => saveApiSession(session)));
             if (!isTauri()) return;
             const updates: Record<string, Partial<Session>> = {};
-            for (const session of loadedSessions) {
+            for (const session of sessionsToSync) {
               if (!session.audioPath || session.audioUrl) continue;
               const blob = await readAudioBlob(session.audioPath, session.audioMime);
               if (!blob) continue;
@@ -1027,7 +1053,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         setSettings(loadedSettings);
       }
       if (!hasUserModifiedSessions.current) {
-        setSessions(loadedSessions.length ? loadedSessions : seedSessions);
+        setSessions(loadedSessions.length ? loadedSessions : []);
       }
       setSettingsSource(resolvedSource);
       hasLoadedSessions.current = true;
@@ -1063,7 +1089,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     if (!session?.audioPath || session.audioUrl) return;
     let active = true;
     void (async () => {
-      const blob = await readAudioBlob(session.audioPath, session.audioMime);
+      const blob = await readAudioBlob(session.audioPath!, session.audioMime);
       if (!active) return;
       if (!blob) {
         updateSession(session.id, { audioPath: undefined, audioMime: undefined });
@@ -1096,27 +1122,25 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   }, [settings.enrichments, mode]);
 
   useEffect(() => {
-    if (!isHydrated && !hasUserUpdatedSettings.current) return;
+    if (!isHydrated) return;
+    const payload = JSON.stringify(settings);
     if (settingsSourceRef.current === "api") {
       void saveApiSettings(settings);
-    } else {
-      const payload = JSON.stringify(settings);
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(SETTINGS_KEY, payload);
-        }
-      } catch {
-        // ignore
-      }
-      void writeToTauri(SETTINGS_FILE, payload);
     }
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(SETTINGS_KEY, payload);
+      }
+    } catch {
+      // ignore
+    }
+    void writeToTauri(SETTINGS_FILE, payload);
     applyTheme(settings.general.theme);
   }, [settings, isHydrated]);
 
   const saveSessionTimeouts = useRef<Record<string, number>>({});
 
   const queueSessionSave = (session: Session) => {
-    if (settingsSourceRef.current !== "api") return;
     const existing = saveSessionTimeouts.current[session.id];
     if (existing) {
       window.clearTimeout(existing);
@@ -1148,17 +1172,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     sessionsRef.current = [newSession, ...sessionsRef.current];
     setSessions((prev) => {
       const next = [newSession, ...prev];
-      if (settingsSourceRef.current !== "api") {
-        const serializable = next.map(({ audioUrl, ...rest }) => rest);
-        try {
-          if (typeof window !== "undefined") {
-            localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
-          }
-        } catch {
-          // ignore
+      const serializable = next.map(({ audioUrl, ...rest }) => rest);
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
         }
-        void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
+      } catch {
+        // ignore
       }
+      void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
       return next;
     });
     queueSessionSave(newSession);
@@ -1188,17 +1210,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         updatedSession = merged;
         return merged;
       });
-      if (settingsSourceRef.current !== "api") {
-        const serializable = next.map(({ audioUrl, ...rest }) => rest);
-        try {
-          if (typeof window !== "undefined") {
-            localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
-          }
-        } catch {
-          // ignore
+      const serializable = next.map(({ audioUrl, ...rest }) => rest);
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
         }
-        void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
+      } catch {
+        // ignore
       }
+      void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
       if (updatedSession) {
         queueSessionSave(updatedSession);
       }
@@ -1462,17 +1482,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       clearAudioBlob(id);
       setSessions((prev) => {
         const next = prev.filter((session) => session.id !== id);
-        if (settingsSourceRef.current !== "api") {
-          const serializable = next.map(({ audioUrl, ...rest }) => rest);
-          try {
-            if (typeof window !== "undefined") {
-              localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
-            }
-          } catch {
-            // ignore
+        const serializable = next.map(({ audioUrl, ...rest }) => rest);
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(SESSIONS_KEY, JSON.stringify(serializable));
           }
-          void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
+        } catch {
+          // ignore
         }
+        void writeToTauri(SESSIONS_FILE, JSON.stringify(serializable));
         if (activeSessionId === id) {
           setActiveSessionId(next[0]?.id ?? null);
         }
@@ -1832,7 +1850,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       const active = getActiveSession();
       if (!active) return;
       if (getProcessingSession()) return;
-      let blob = audioBlobsRef.current[active.id];
+      let blob: Blob | undefined = audioBlobsRef.current[active.id];
       if (!blob) {
         if (settingsSourceRef.current === "api") {
           blob = (await fetchApiAudioBlob(active.id)) ?? undefined;

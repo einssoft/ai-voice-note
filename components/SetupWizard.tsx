@@ -134,7 +134,7 @@ export function SetupWizard({ open, onOpenChange }: SetupWizardProps) {
   const [localWhisperModelOk, setLocalWhisperModelOk] = useState<boolean | null>(null);
   const [localWhisperModelError, setLocalWhisperModelError] = useState<string | null>(null);
   const [localWhisperChecking, setLocalWhisperChecking] = useState(false);
-  const [whisperModelChoice, setWhisperModelChoice] = useState(
+  const [whisperModelChoice, setWhisperModelChoice] = useState<string>(
     WHISPER_MODEL_OPTIONS[1]?.id ?? WHISPER_MODEL_OPTIONS[0]?.id ?? "base"
   );
   const [customWhisperUrl, setCustomWhisperUrl] = useState("");

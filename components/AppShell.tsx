@@ -5,6 +5,7 @@ import { CheckCircle2, Mic, Moon, Settings, Sun } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
 import { useAppStore } from "@/lib/store";
+import { KNOWN_PROVIDER_URLS } from "@/lib/processing";
 import { cn, isEditableTarget, matchesHotkey } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -113,15 +114,17 @@ export function AppShell() {
 
   const localWhisperOk = settings.local.whisper.installed;
   const localLlmOk = settings.local.llm.available;
-  const defaultWhisperOk = settings.api.whisper.provider === "Local"
+  const effectiveWhisperProvider = whisperKey?.provider ?? settings.api.whisper.provider;
+  const effectiveLlmProvider = llmKey?.provider ?? settings.api.llm.provider;
+  const defaultWhisperOk = effectiveWhisperProvider === "Local"
     ? localWhisperOk
     : Boolean((whisperKey?.apiKey ?? settings.api.whisper.apiKey ?? "").trim()) &&
-      (settings.api.whisper.provider !== "Other" ||
+      (effectiveWhisperProvider !== "Custom" ||
         Boolean((whisperKey?.endpoint ?? settings.api.whisper.endpoint ?? "").trim()));
-  const defaultLlmOk = settings.api.llm.provider === "Local"
+  const defaultLlmOk = effectiveLlmProvider === "Local"
     ? localLlmOk
     : Boolean((llmKey?.apiKey ?? settings.api.llm.apiKey ?? "").trim()) &&
-      (settings.api.llm.provider === "OpenAI" ||
+      (effectiveLlmProvider in KNOWN_PROVIDER_URLS ||
         Boolean((llmKey?.baseUrl ?? settings.api.llm.baseUrl ?? "").trim()));
 
   const updateSidebarWidth = useCallback(
@@ -220,18 +223,63 @@ export function AppShell() {
         localLlmAvailable = false;
       }
 
+      const updatedSettings = { ...settings };
+      let changed = false;
+
       if (
         whisperInstalled !== settings.local.whisper.installed ||
         localLlmAvailable !== settings.local.llm.available
       ) {
-        await updateSettings({
-          ...settings,
-          local: {
-            ...settings.local,
-            whisper: { ...settings.local.whisper, installed: whisperInstalled },
-            llm: { ...settings.local.llm, available: localLlmAvailable },
-          },
-        });
+        updatedSettings.local = {
+          ...settings.local,
+          whisper: { ...settings.local.whisper, installed: whisperInstalled },
+          llm: { ...settings.local.llm, available: localLlmAvailable },
+        };
+        changed = true;
+      }
+
+      // Auto-switch whisper provider if current one is non-functional
+      const whisperKeys = settings.api.whisper.keys ?? [];
+      const hasWorkingWhisperKey = whisperKeys.some(
+        (k) => k.provider !== "Local" && k.apiKey?.trim()
+      );
+      if (settings.api.whisper.provider === "Local" && !whisperInstalled && hasWorkingWhisperKey) {
+        const firstWorking = whisperKeys.find((k) => k.provider !== "Local" && k.apiKey?.trim());
+        if (firstWorking) {
+          updatedSettings.api = {
+            ...updatedSettings.api,
+            whisper: {
+              ...updatedSettings.api.whisper,
+              provider: firstWorking.provider as any,
+              activeKeyId: firstWorking.id,
+            },
+          };
+          changed = true;
+        }
+      }
+
+      // Auto-switch LLM provider if current one is non-functional
+      const llmKeys = settings.api.llm.keys ?? [];
+      const hasWorkingLlmKey = llmKeys.some(
+        (k) => k.provider !== "Local" && k.apiKey?.trim()
+      );
+      if (settings.api.llm.provider === "Local" && !localLlmAvailable && hasWorkingLlmKey) {
+        const firstWorking = llmKeys.find((k) => k.provider !== "Local" && k.apiKey?.trim());
+        if (firstWorking) {
+          updatedSettings.api = {
+            ...updatedSettings.api,
+            llm: {
+              ...updatedSettings.api.llm,
+              provider: firstWorking.provider as any,
+              activeKeyId: firstWorking.id,
+            },
+          };
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await updateSettings(updatedSettings);
       }
     };
 

@@ -221,12 +221,12 @@
   "enrichment.meeting": "Meeting-Notizen",
   "enrichment.email": "E-Mail Entwurf",
   "enrichment.prompt_builder": "Prompt erstellen",
-  "enrichment.prompt.smart": "Erstelle Smart Notes in Markdown mit klaren Abschnittsüberschriften:\\n- Kurzfassung (3-5 Stichpunkte)\\n- Entscheidungen\\n- Nächste Schritte\\nRegeln:\\n- Nur Informationen aus dem Transkript.\\n- Keine Erfindungen, keine Floskeln.\\n- Halte jeden Punkt kurz.",
-  "enrichment.prompt.tasks": "Extrahiere alle Aufgaben/To-dos als Liste.\\nRegeln:\\n- Eine Aufgabe pro Bullet.\\n- Wenn genannt: Owner, Termin, Status.\\n- Keine Duplikate, kein Kontexttext.",
-  "enrichment.prompt.meeting": "Erstelle strukturierte Meeting-Notizen in Markdown:\\n- Zusammenfassung\\n- Kernthemen\\n- Entscheidungen\\n- Action Items (mit Owner/Termin falls genannt)\\n- Offene Punkte\\nRegeln:\\n- Nur Informationen aus dem Transkript.\\n- Halte es knapp und klar.",
-  "enrichment.prompt.email": "Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript.\\nStruktur:\\n- Betreff\\n- Begrüßung\\n- 3-6 Sätze Zusammenfassung + nächste Schritte\\n- Abschluss\\nRegeln:\\n- Keine erfundenen Fakten.",
-  "enrichment.prompt.prompt_builder": "Analysiere das Transkript und erstelle daraus einen präzisen, wiederverwendbaren LLM-Prompt (System- oder User-Prompt).\\n\\nStruktur des Outputs:\\n## Ziel\\nEine klare Beschreibung, was der Prompt bewirken soll.\\n\\n## Prompt\\nDer fertige Prompt in Markdown, bereit zum Kopieren.\\n\\n## Hinweise\\n- Platzhalter als {{VARIABLE}} kennzeichnen\\n- Kontext und Constraints aus dem Transkript ableiten\\n\\nRegeln:\\n- Nur Informationen aus dem Transkript verwenden.\\n- Der generierte Prompt muss eigenständig funktionieren (ohne das Transkript).\\n- Klare Rollenanweisung, Aufgabe, Format und Constraints definieren.\\n- Prompt-Sprache = Sprache des Transkripts.",
-  "keywords.defaultPrompt": "System / Instruction Prompt\\n\\nDu extrahierst Keywords aus der gesprochenen Sprache.\\n\\nRegeln:\\n\\nGib ausschließlich ein valides JSON-Array zurück (keine Erklärung, kein Markdown).\\n\\nJedes Keyword ist ein einzelner String ohne Zeilenumbrüche.\\n\\nNormalisiere:\\n- keine Satzzeichen\\n- keine Füllwörter (z. B. \"ja\", \"was\", \"gibt es\", \"heute\", \"dann\", \"noch\")\\n- keine Dubletten oder Wiederholungen\\n- Bevorzuge Substantive oder feste Nominalphrasen\\n- Keine Teilwörter oder abgeschnittene Tokens\\n- Maximal 3 Wörter pro Keyword\\n- 4-6 Keywords\\n- Reihenfolge: wichtig -> weniger wichtig\\n\\nBeispiel:\\nText:\\n\"Heute gibt es Pizza und einen grünen Salat.\"\\n\\nAusgabe:\\n[\"Pizza\",\"grüner Salat\"]\\n\\nText:\\n{{TRANSKRIPT}}"
+  "enrichment.prompt.smart": "Erstelle Smart Notes in Markdown mit klaren Abschnittsüberschriften:\n- Kurzfassung (3-5 Stichpunkte)\n- Entscheidungen\n- Nächste Schritte\nRegeln:\n- Nur Informationen aus dem Transkript.\n- Keine Erfindungen, keine Floskeln.\n- Halte jeden Punkt kurz.",
+  "enrichment.prompt.tasks": "Extrahiere alle Aufgaben/To-dos als Liste.\nRegeln:\n- Eine Aufgabe pro Bullet.\n- Wenn genannt: Owner, Termin, Status.\n- Keine Duplikate, kein Kontexttext.",
+  "enrichment.prompt.meeting": "Erstelle strukturierte Meeting-Notizen in Markdown:\n- Zusammenfassung\n- Kernthemen\n- Entscheidungen\n- Action Items (mit Owner/Termin falls genannt)\n- Offene Punkte\nRegeln:\n- Nur Informationen aus dem Transkript.\n- Halte es knapp und klar.",
+  "enrichment.prompt.email": "Erstelle eine kurze, professionelle E-Mail basierend auf dem Transkript.\nStruktur:\n- Betreff\n- Begrüßung\n- 3-6 Sätze Zusammenfassung + nächste Schritte\n- Abschluss\nRegeln:\n- Keine erfundenen Fakten.",
+  "enrichment.prompt.prompt_builder": "Analysiere das Transkript und erstelle daraus einen präzisen, wiederverwendbaren LLM-Prompt (System- oder User-Prompt).\n\nStruktur des Outputs:\n## Ziel\nEine klare Beschreibung, was der Prompt bewirken soll.\n\n## Prompt\n\n## Hinweise\n- Platzhalter als {{VARIABLE}} kennzeichnen\n- Kontext und Constraints aus dem Transkript ableiten\n\nRegeln:\n- Nur Informationen aus dem Transkript verwenden.\n- Der generierte Prompt muss eigenständig funktionieren (ohne das Transkript).\n- Klare Rollenanweisung, Aufgabe, Format und Constraints definieren.\n- Prompt-Sprache = Sprache des Transkripts.",
+  "keywords.defaultPrompt": "System / Instruction Prompt\n\nDu extrahierst Keywords aus der gesprochenen Sprache.\n\nRegeln:\n\nGib ausschließlich ein valides JSON-Array zurück (keine Erklärung, kein Markdown).\n\nJedes Keyword ist ein einzelner String ohne Zeilenumbrüche.\n\nNormalisiere:\n- keine Satzzeichen\n- keine Füllwörter (z. B. \"ja\", \"was\", \"gibt es\", \"heute\", \"dann\", \"noch\")\n- keine Dubletten oder Wiederholungen\n- Bevorzuge Substantive oder feste Nominalphrasen\n- Keine Teilwörter oder abgeschnittene Tokens\n- Maximal 3 Wörter pro Keyword\n- 4-6 Keywords\n- Reihenfolge: wichtig -> weniger wichtig\n\nBeispiel:\nText:\n\"Heute gibt es Pizza und einen grünen Salat.\"\n\nAusgabe:\n[\"Pizza\",\"grüner Salat\"]\n\nText:\n{{TRANSKRIPT}}"
   ,
   "common.untitled": "Ohne Titel"
   ,
@@ -258,7 +258,8 @@
   "errors.baseUrlRequired": "Base URL ist für Nicht-OpenAI-Provider erforderlich."
   ,
   "errors.noTranscript": "Kein Transkript zum Anreichern vorhanden.",
-  "errors.audioBlobMissingDetails": "Audio-Daten nicht gefunden. Bitte erneut aufnehmen oder Datei neu hochladen."
+  "errors.audioBlobMissingDetails": "Audio-Daten nicht gefunden. Bitte erneut aufnehmen oder Datei neu hochladen.",
+  "errors.loadFailed": "Audio-Datei konnte nicht geladen werden. Mögliche Ursachen: Datei zu groß, ungültiges Format oder Netzwerkproblem. Unterstützte Formate: MP3, WAV, M4A, WebM, OGG (max. 25 MB)."
   ,
   "errors.transcriptionFailed": "Transkription fehlgeschlagen.",
   "errors.enrichmentFailed": "Anreicherung fehlgeschlagen.",
@@ -277,6 +278,18 @@
   "placeholder.endpoint": "https://api.example.com",
   "placeholder.baseUrl": "https://api.example.com"
   ,
+  "actions.title": "Aktionen",
+  "actions.run": "Ausführen",
+  "actions.success": "Erfolgreich ausgeführt.",
+  "actions.failed": "Aktion fehlgeschlagen.",
+  "actions.webhookDesc": "Session-Daten an Webhook senden",
+  "actions.mindmapDesc": "Mindmap generieren",
+  "actions.flowchartDesc": "Flowchart generieren",
+  "actions.webhookNoUrl": "Bitte eine URL eingeben.",
+  "actions.webhookInvalidUrl": "Ungültige URL.",
+  "actions.webhookSuccess": "Webhook erfolgreich gesendet.",
+  "actions.includeTranscript": "Transkript zusätzlich mitsenden",
+  "actions.save": "Speichern",
   "settings.enrichments.reset": "Auf Standard zurücksetzen",
   "settings.source.label": "Quelle",
   "settings.source.api": "Lokale API",

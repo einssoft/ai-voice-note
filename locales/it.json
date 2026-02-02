@@ -113,12 +113,12 @@
   "enrichment.meeting": "Note riunione",
   "enrichment.email": "Bozza email",
   "enrichment.prompt_builder": "Crea prompt",
-  "enrichment.prompt.smart": "Crea note intelligenti in Markdown con intestazioni chiare:\\n- Sintesi (3-5 punti)\\n- Decisioni\\n- Prossimi passi\\nRegole:\\n- Usa solo informazioni dalla trascrizione.\\n- Nessuna invenzione, nessun riempitivo.\\n- Mantieni ogni punto breve.",
-  "enrichment.prompt.tasks": "Estrai tutte le attività come elenco.\\nRegole:\\n- Una attività per punto.\\n- Includi responsabile/data/stato se menzionati.\\n- Niente duplicati, niente contesto extra.",
-  "enrichment.prompt.meeting": "Crea note di riunione strutturate in Markdown:\\n- Sintesi\\n- Punti chiave\\n- Decisioni\\n- Attività (con responsabile/data se menzionati)\\n- Questioni aperte\\nRegole:\\n- Usa solo fatti dalla trascrizione.\\n- Sii conciso.",
-  "enrichment.prompt.email": "Redigi un'e‑mail professionale breve basata sulla trascrizione.\\nStruttura:\\n- Oggetto\\n- Saluto\\n- 3-6 frasi di sintesi + prossimi passi\\n- Chiusura\\nRegole:\\n- Non inventare fatti.",
-  "enrichment.prompt.prompt_builder": "Analizza la trascrizione e crea un prompt LLM preciso e riutilizzabile (prompt di sistema o utente).\\n\\nStruttura output:\\n## Obiettivo\\nDescrizione chiara di cosa deve fare il prompt.\\n\\n## Prompt\\nIl prompt finito in Markdown, pronto da copiare.\\n\\n## Note\\n- Segnaposto come {{VARIABILE}}\\n- Derivare contesto e vincoli dalla trascrizione\\n\\nRegole:\\n- Usare solo informazioni dalla trascrizione.\\n- Il prompt generato deve funzionare autonomamente (senza la trascrizione).\\n- Definire ruolo, compito, formato e vincoli.\\n- Lingua del prompt = lingua della trascrizione.",
-  "keywords.defaultPrompt": "System / Instruction Prompt\\n\\nEstrai parole chiave dal linguaggio parlato.\\n\\nRegole:\\n\\nRestituisci solo un array JSON valido (nessuna spiegazione, nessun Markdown).\\n\\nOgni parola chiave è una singola stringa senza interruzioni di riga.\\n\\nNormalizza:\\n- niente punteggiatura\\n- niente parole riempitive (es. \"sì\", \"cosa\", \"c’è\", \"oggi\", \"allora\", \"ancora\")\\n- niente duplicati\\n- preferisci sostantivi o sintagmi nominali fissi\\n- niente parole parziali o token troncati\\n- max 3 parole per parola chiave\\n- 4-6 parole chiave\\n- ordine: più importante -> meno importante\\n\\nEsempio:\\nTesto:\\n\"Oggi c’è pizza e un’insalata verde.\"\\n\\nOutput:\\n[\"Pizza\",\"insalata verde\"]\\n\\nTesto:\\n{{TRANSCRIPT}}"
+  "enrichment.prompt.smart": "Crea note intelligenti in Markdown con intestazioni chiare:\n- Sintesi (3-5 punti)\n- Decisioni\n- Prossimi passi\nRegole:\n- Usa solo informazioni dalla trascrizione.\n- Nessuna invenzione, nessun riempitivo.\n- Mantieni ogni punto breve.",
+  "enrichment.prompt.tasks": "Estrai tutte le attività come elenco.\nRegole:\n- Una attività per punto.\n- Includi responsabile/data/stato se menzionati.\n- Niente duplicati, niente contesto extra.",
+  "enrichment.prompt.meeting": "Crea note di riunione strutturate in Markdown:\n- Sintesi\n- Punti chiave\n- Decisioni\n- Attività (con responsabile/data se menzionati)\n- Questioni aperte\nRegole:\n- Usa solo fatti dalla trascrizione.\n- Sii conciso.",
+  "enrichment.prompt.email": "Redigi un'e‑mail professionale breve basata sulla trascrizione.\nStruttura:\n- Oggetto\n- Saluto\n- 3-6 frasi di sintesi + prossimi passi\n- Chiusura\nRegole:\n- Non inventare fatti.",
+  "enrichment.prompt.prompt_builder": "Analizza la trascrizione e crea un prompt LLM preciso e riutilizzabile (prompt di sistema o utente).\n\nStruttura output:\n## Obiettivo\nDescrizione chiara di cosa deve fare il prompt.\n\n## Prompt\n\n## Note\n- Segnaposto come {{VARIABILE}}\n- Derivare contesto e vincoli dalla trascrizione\n\nRegole:\n- Usare solo informazioni dalla trascrizione.\n- Il prompt generato deve funzionare autonomamente (senza la trascrizione).\n- Definire ruolo, compito, formato e vincoli.\n- Lingua del prompt = lingua della trascrizione.",
+  "keywords.defaultPrompt": "System / Instruction Prompt\n\nEstrai parole chiave dal linguaggio parlato.\n\nRegole:\n\nRestituisci solo un array JSON valido (nessuna spiegazione, nessun Markdown).\n\nOgni parola chiave è una singola stringa senza interruzioni di riga.\n\nNormalizza:\n- niente punteggiatura\n- niente parole riempitive (es. \"sì\", \"cosa\", \"c’è\", \"oggi\", \"allora\", \"ancora\")\n- niente duplicati\n- preferisci sostantivi o sintagmi nominali fissi\n- niente parole parziali o token troncati\n- max 3 parole per parola chiave\n- 4-6 parole chiave\n- ordine: più importante -> meno importante\n\nEsempio:\nTesto:\n\"Oggi c’è pizza e un’insalata verde.\"\n\nOutput:\n[\"Pizza\",\"insalata verde\"]\n\nTesto:\n{{TRANSCRIPT}}"
   ,
   "common.untitled": "Senza titolo"
   ,
@@ -150,7 +150,8 @@
   "errors.baseUrlRequired": "Base URL richiesta per provider non‑OpenAI."
   ,
   "errors.noTranscript": "Nessuna trascrizione da arricchire.",
-  "errors.audioBlobMissingDetails": "Audio non trovato. Registra di nuovo o ricarica il file."
+  "errors.audioBlobMissingDetails": "Audio non trovato. Registra di nuovo o ricarica il file.",
+  "errors.loadFailed": "Il file audio non è stato caricato. Possibili cause: file troppo grande, formato non supportato o problema di rete. Formati supportati: MP3, WAV, M4A, WebM, OGG (max 25 MB)."
   ,
   "errors.transcriptionFailed": "Trascrizione non riuscita.",
   "errors.enrichmentFailed": "Arricchimento non riuscito.",
@@ -169,6 +170,18 @@
   "placeholder.endpoint": "https://api.example.com",
   "placeholder.baseUrl": "https://api.example.com"
   ,
+  "actions.title": "Azioni",
+  "actions.run": "Esegui",
+  "actions.success": "Eseguito con successo.",
+  "actions.failed": "Azione non riuscita.",
+  "actions.webhookDesc": "Invia dati sessione al webhook",
+  "actions.mindmapDesc": "Genera mappa mentale",
+  "actions.flowchartDesc": "Genera diagramma di flusso",
+  "actions.webhookNoUrl": "Inserisci un URL.",
+  "actions.webhookInvalidUrl": "URL non valido.",
+  "actions.webhookSuccess": "Webhook inviato con successo.",
+  "actions.includeTranscript": "Includi anche la trascrizione",
+  "actions.save": "Salva",
   "settings.enrichments.reset": "Ripristina predefiniti",
   "settings.source.label": "Origine",
   "settings.source.api": "API locale",

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Read(//Users/jensdietrich/Downloads/**)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pnpm tauri icon:*)"
     ]
   }
 }

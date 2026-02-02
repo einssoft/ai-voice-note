@@ -10,6 +10,107 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
 - **Lokal oder Cloud**: Wahlweise komplett offline mit lokalen Modellen (Whisper.cpp + Ollama) oder mit Cloud-APIs (OpenAI, Gemini, Claude, Grok)
 - **Fokussiert und ruhig**: Minimalistisches UI, das sich auf die Kernfunktion konzentriert
 
+## Setup-Anleitung
+
+### Voraussetzungen
+
+- **Node.js** 18+ (empfohlen: 20+)
+- **pnpm** (Package Manager)
+- **Für Desktop-Build**: Rust + Tauri CLI v2.x
+
+Optional für lokale AI:
+- **FFmpeg** (für Audio-Konvertierung)
+- **whisper.cpp** (für lokale Transkription)
+- **Ollama** (für lokales LLM)
+
+> **Hinweis**: Der Setup-Wizard in der App kann FFmpeg, whisper.cpp und Ollama automatisch erkennen und teilweise installieren.
+
+### Installation
+
+```bash
+# Repository klonen
+git clone <repo-url>
+cd ai-voice-note
+
+# Dependencies installieren
+pnpm install
+```
+
+### Development
+
+**Web-Version** (läuft im Browser auf `http://localhost:3000`):
+```bash
+pnpm dev
+```
+
+**Desktop-Version** (Tauri):
+```bash
+pnpm tauri dev
+```
+
+> Die Desktop-Version startet automatisch den lokalen API-Server auf Port 3895.
+
+### Production Build
+
+**Desktop-App bauen**:
+```bash
+pnpm tauri build
+```
+
+Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
+
+### Erste Schritte
+
+1. **App starten** (Web oder Tauri)
+2. **Setup-Wizard öffnen** (beim ersten Start oder via Settings)
+3. **Provider konfigurieren**:
+   - Für **Cloud**: API-Keys in Settings → API Keys eingeben
+   - Für **Lokal**: Setup-Wizard durchlaufen (FFmpeg, Whisper, Ollama)
+4. **Hotkey testen**: `Ctrl+Shift+R` (oder konfigurierte Kombination)
+5. **Erste Aufnahme**: Mic-Button klicken oder Hotkey drücken, sprechen, stoppen
+
+---
+
+## Die Lösung
+
+### Workflow
+
+```
+🎤 Sprechen  ──►  📝 Transkription  ──►  🤖 KI-Enrichment  ──►  📋 Aktion
+                                                │
+                                                │  ♻️ Ergebnis erneut
+                                                │     anreichern
+                                                └───────┘
+```
+
+Jede Sprachaufnahme durchläuft eine Pipeline: Aufnahme → Transkription → KI-Anreicherung → Aktion. Das Besondere: **Enrichments sind verkettbar** – das Ergebnis eines Enrichments kann als Input für ein weiteres dienen, bis das gewünschte Ergebnis steht.
+
+### Beispiel: Vom Scrum-Planning zur Management-Mail
+
+```
+🎤 Scrum-Planning Meeting
+    │
+    ▼
+📝 Voice-to-Text (Transkription)
+    │
+    ▼
+🤖 Enrichment 1: "Backlog für den nächsten Sprint"
+    │               → Strukturierte User Stories, Prioritäten, Story Points
+    ▼
+🤖 Enrichment 2: "Kritische Analyse"
+    │               → Risiken, Abhängigkeiten, fehlende Akzeptanzkriterien
+    ▼
+🤖 Enrichment 3: "Email an Management"
+    │               → Professionelle Zusammenfassung mit Status & Empfehlungen
+    ▼
+📋 Aktion: Webhook → Send Mail
+                      → E-Mail wird automatisch versendet
+```
+
+> **Kernidee**: Sprache rein, strukturierte Ergebnisse raus – in beliebig vielen Verarbeitungsschritten, ohne die App zu verlassen.
+
+---
+
 ## Architektur-Übersicht
 
 ### Tech Stack
@@ -95,20 +196,31 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
 3. **Enrichment** (KI-Anreicherung)
    - **Lokal**: Ollama (diverse Modelle: llama3, mistral, etc.)
    - **Remote**: OpenAI, Gemini, Claude, Grok via OpenAI-kompatible APIs
-   - 4 vordefinierte Modi mit anpassbaren Prompts:
+   - 5 vordefinierte Modi mit anpassbaren Prompts:
      - **Smart Notes**: Zusammenfassung, Entscheidungen, nächste Schritte (Markdown)
      - **Tasks**: Action Items mit Owner, Datum, Status
      - **Meeting Notes**: Summary, Key Points, Decisions, Action Items, Open Questions
      - **Email**: Subject + professioneller E-Mail-Draft
+     - **Prompt erstellen**: Generiert wiederverwendbare LLM-Prompts aus Transkripten
    - Keyword-Extraktion (4-6 Keywords) mit LLM oder Fallback-Algorithmus
    - Temperature: 0.3 (konservativ), Max Tokens: 1200
+
+4. **Actions** (Post-Enrichment)
+   - Plugin-artiges Action-System (`lib/actions/`)
+   - **Webhook**: Session-Daten (Anreicherung, Keywords, Titel) per POST an konfigurierbare URL senden
+   - **Mindmap**: Automatische Mermaid-Mindmap aus Keywords, Notizen und ToDos
+   - **Flowchart**: Automatischer Mermaid-Flowchart (graph TD) aus Session-Daten
+   - Mermaid-Diagramme mit farbigem Theme, Zoom-Steuerung und Save-Funktion
+   - Ergebnisse sind einzeln zu-/aufklappbar
+   - Erweiterbar über `registerAction()` Registry
 
 ### Komponenten-Übersicht
 
 **Hauptkomponenten:**
 - `components/AppShell.tsx` - Container mit Topbar, Sidebar, Hotkey-Handling
 - `components/RecorderPanel.tsx` - Aufnahme-Interface (zentraler Mic-Button, Audio-Level)
-- `components/SessionView.tsx` - Session-Detail mit Tabs (Enriched/Transcript/Metadata)
+- `components/SessionView.tsx` - Session-Detail mit Tabs (Enriched/Transcript/Metadata) + ActionPanel
+- `components/ActionPanel.tsx` - Action-System UI (Webhook, Mindmap, Flowchart mit Mermaid-Rendering)
 - `components/SettingsDialog.tsx` - Umfassende Settings (APIs, Provider, Hotkeys, Privacy)
 - `components/SetupWizard.tsx` - Auto-Setup für FFmpeg/Whisper/Ollama (Download & Detection)
 - `components/Sidebar.tsx` - Session-Liste mit Suche
@@ -119,6 +231,7 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
 - `lib/audioRecorder.ts` - Audio-Aufnahme mit Web Audio API
 - `lib/localApi.ts` - API-Client für Tauri Backend
 - `lib/i18n.ts` - Internationalisierung (4 Sprachen)
+- `lib/actions/` - Action-System (Registry, Webhook, Mindmap, Flowchart)
 - `lib/utils.ts` - Utilities (Hotkey-Matching, Formatierung)
 
 **Tauri Backend:**
@@ -172,13 +285,22 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
 - Modell-Download via Setup-Wizard
 
 ✅ **KI-Enrichment**
-- 4 vordefinierte Modi mit editierbaren Prompts
+- 5 vordefinierte Modi mit editierbaren Prompts (Smart Notes, Tasks, Meeting Notes, Email, Prompt erstellen)
 - Keyword-Extraktion (LLM-basiert mit Frequency-Fallback)
 - **Provider**:
   - Lokal: Ollama (automatische Erkennung + Modell-Pull)
   - Remote: OpenAI, Google Gemini, Anthropic Claude, xAI Grok
 - Multi-API-Key Support (mehrere Keys pro Provider)
 - Offline-Modus für Lokalbetrieb
+
+✅ **Action-System (Post-Enrichment)**
+- Plugin-artiges System mit Registry-Pattern (`lib/actions/`)
+- **Webhook**: Session-Daten (Anreicherung, Keywords) per POST an konfigurierbare URL
+- **Mindmap**: Automatische Mermaid-Mindmap-Generierung aus Session-Daten
+- **Flowchart**: Automatische Mermaid-Flowchart-Generierung
+- Farbiges Mermaid-Theme mit Zoom-Steuerung (25%–300%)
+- Ergebnisse einzeln zu-/aufklappbar, als `.mmd` Datei speicherbar
+- Erweiterbar: Neue Actions via `registerAction()` hinzufügbar
 
 ✅ **Session-Management**
 - Persistente Sessions mit Status-Tracking
@@ -217,65 +339,6 @@ Teams und Einzelpersonen wollen Audio-Notizen schnell aufnehmen, transkribieren 
   - **Transcript Tab**: Kopiert/Speichert die Transkription
   - **Metadata Tab**: Kopiert/Speichert vollständiges Dokument (Metadaten + Anreicherung + Transkript)
 
-## Setup-Anleitung
-
-### Voraussetzungen
-
-- **Node.js** 18+ (empfohlen: 20+)
-- **pnpm** (Package Manager)
-- **Für Desktop-Build**: Rust + Tauri CLI v2.x
-
-Optional für lokale AI:
-- **FFmpeg** (für Audio-Konvertierung)
-- **whisper.cpp** (für lokale Transkription)
-- **Ollama** (für lokales LLM)
-
-> **Hinweis**: Der Setup-Wizard in der App kann FFmpeg, whisper.cpp und Ollama automatisch erkennen und teilweise installieren.
-
-### Installation
-
-```bash
-# Repository klonen
-git clone <repo-url>
-cd ai-voice-note
-
-# Dependencies installieren
-pnpm install
-```
-
-### Development
-
-**Web-Version** (läuft im Browser auf `http://localhost:3000`):
-```bash
-pnpm dev
-```
-
-**Desktop-Version** (Tauri):
-```bash
-pnpm tauri dev
-```
-
-> Die Desktop-Version startet automatisch den lokalen API-Server auf Port 3895.
-
-### Production Build
-
-**Desktop-App bauen**:
-```bash
-pnpm tauri build
-```
-
-Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
-
-### Erste Schritte
-
-1. **App starten** (Web oder Tauri)
-2. **Setup-Wizard öffnen** (beim ersten Start oder via Settings)
-3. **Provider konfigurieren**:
-   - Für **Cloud**: API-Keys in Settings → API Keys eingeben
-   - Für **Lokal**: Setup-Wizard durchlaufen (FFmpeg, Whisper, Ollama)
-4. **Hotkey testen**: `Ctrl+Shift+R` (oder konfigurierte Kombination)
-5. **Erste Aufnahme**: Mic-Button klicken oder Hotkey drücken, sprechen, stoppen
-
 ### Nutzungsszenarien
 
 **Voice Recording & Transkription**
@@ -300,7 +363,12 @@ Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
 - **Enriched Tab aktiv**: Copy/Save exportiert die KI-Anreicherung
 - **Transcript Tab aktiv**: Copy/Save exportiert die reine Transkription
 - **Metadata Tab aktiv**: Copy/Save exportiert vollständiges Dokument (Metadaten + Anreicherung + Transkript)
-- "Ordner öffnen" Button öffnet den Speicherort der letzten gespeicherten Datei
+
+**Actions (nach Anreicherung)**
+- Aktionen-Panel unterhalb der Tabs (aufklappbar)
+- **Mindmap generieren**: Erzeugt Mermaid-Mindmap, mit Zoom und Speichern
+- **Flowchart generieren**: Erzeugt Mermaid-Flowchart, mit Zoom und Speichern
+- **Webhook senden**: POST an konfigurierbare URL (Anreicherung + Keywords)
 
 ### Konfiguration
 
@@ -484,7 +552,7 @@ Die fertige App befindet sich in `src-tauri/target/release/bundle/`.
 - **Collaborative Sessions**: Mehrere User annotieren dieselbe Aufnahme
 - **Speaker Diarization**: Erkennung verschiedener Sprecher
 - **Custom Enrichment Modes**: User-defined Modi mit Template-System
-- **Plugins**: Erweiterbar via JavaScript/WebAssembly
+- **Plugins**: Weitere Actions via `registerAction()` (Grundlage bereits implementiert)
 - **Mobile App**: React Native Companion (Session-Viewer)
 - **Browser Extension**: Quick-Capture von beliebigen Tabs
 
@@ -501,6 +569,7 @@ ai-voice-note/
 │   ├── AppShell.tsx             # Container (Topbar + Sidebar + Main)
 │   ├── RecorderPanel.tsx        # Recording Interface
 │   ├── SessionView.tsx          # Session Detail (Tabs: Enriched/Transcript/Metadata)
+│   ├── ActionPanel.tsx          # Action-System UI (Webhook, Mindmap, Flowchart)
 │   ├── SettingsDialog.tsx       # Settings (Multi-Provider Config)
 │   ├── SetupWizard.tsx          # Setup für FFmpeg/Whisper/Ollama
 │   ├── Sidebar.tsx              # Session List + Search
@@ -515,7 +584,14 @@ ai-voice-note/
 │   ├── i18n.ts                  # Internationalisierung
 │   ├── utils.ts                 # Utilities (Hotkey-Matching, Formatierung)
 │   ├── icons.tsx                # Icon Mapping (Provider → Lucide Icons)
-│   └── export.ts                # File Export (Text Download)
+│   ├── export.ts                # File Export (Text Download)
+│   └── actions/                 # Action-System (Plugin-artig)
+│       ├── index.ts             # Registriert alle Actions, Re-Exports
+│       ├── types.ts             # ActionDefinition, ActionResult, Artifact Types
+│       ├── registry.ts          # registerAction(), getActions(), getActionById()
+│       ├── webhookAction.ts     # POST Session-Daten an konfigurierbare URL
+│       ├── mindmapAction.ts     # Mermaid Mindmap aus Session-Daten
+│       └── flowchartAction.ts   # Mermaid Flowchart aus Session-Daten
 │
 ├── locales/                      # i18n JSON Files
 │   ├── de.json                  # Deutsch
